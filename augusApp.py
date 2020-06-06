@@ -9,6 +9,11 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         super().__init__(None)
         self.setupUi()
         self.show()
+        # reference to a file
+        self.fileRef = ""
+        self.fileSaved = False
+        self.txtOuptpuRow = 0
+        self.txtOuptpuCol = 0
 
     def setupUi(self):
         self.setObjectName("augusApp")
@@ -71,6 +76,8 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         font.setPointSize(10)
         self.txtInput.setFont(font)
         self.txtInput.setObjectName("txtInput")
+        self.txtInput.textChanged.connect(self.txtInputChanged_action)
+        self.txtInput.cursorPositionChanged.connect(self.txtInputCursorPositionChanged_action)
         # -- SALIDA DE CODIGO (CMD)
         self.txtOutput =  QtWidgets.QPlainTextEdit(self.splitter)
         self.txtOutput.setMinimumSize(QtCore.QSize(0, 100))
@@ -233,39 +240,136 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.actionContinue.setShortcut("F6")
         self.actionGo_To.setText("Go To")
         self.actionGo_To.setShortcut("Ctrl+G")
-
+        # -- File menu actions
         self.actionNew.triggered.connect(self.newFile_action)
         self.actionOpen.triggered.connect(self.openFile_action)
         self.actionSave.triggered.connect(self.saveFile_action)
         self.actionSave_As.triggered.connect(self.saveFileAs_action)
-
+        # -- Edit menu actions
+        self.actionGo_To.triggered.connect(self.goTo_action)
+        # -- Run menu actions
+        self.actionAscendent_Debugging.triggered.connect(self.ascendentDebug_action)
+        self.actionAscendent_Without_Debugging.triggered.connect(self.ascendentRun_action)
+        self.actionDescendent_Without_Debugging.triggered.connect(self.descendentRun_action)
+    
     def newFile_action(self):
-        msg = QtWidgets.QMessageBox.question(
-            self,'Nuevo archivo',
-            'El código actual se perderá. ¿Desea guardar antes?',
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel)
-        if msg == QtWidgets.QMessageBox.Yes:
-            # Is there a file reference?
-            # yes -> upload file 
-            # no -> call savefileas
-            pass
-        elif msg == QtWidgets.QMessageBox.No:
-            self.txtInput.setPlainText("")
-            self.setWindowTitle('Augus 0.1 - untitled')
-            self.lblStatus.setText("Not saved")
-            # Clear file reference
+        """Checks reference of actual file being edited. If it's saved then just clear the input text, if it isn't saveFile is called"""
+        if self.fileSaved:
+            msg = QtWidgets.QMessageBox.question(
+                self,'New',
+                'Do you want to save changes before?',
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel)
+            if msg == QtWidgets.QMessageBox.Yes:
+                self.saveFile_action()
+        self.txtInput.setPlainText("")
+        self.setWindowTitle('Augus 0.1 - untitled')
+        self.lblStatus.setText("Not saved")
+        self.fileRef = ""
 
     def saveFile_action(self):
-        pass
+        """Checks the existence of a reference to a file. If there is one, then the file is uploaded, else saveFileAs is called"""
+        # there is a file reference?
+        if not self.fileRef.strip():
+            # there is not -> call savefileas
+            self.saveFileAs_action()
+        else:
+            # there is -> upload file
+            with codecs.open(self.fileRef, 'w', encoding='utf8') as f:
+                f.write(self.txtInput.toPlainText())
+            self.fileSaved = True
+            self.lblStatus.setText('Saved')
     
     def saveFileAs_action(self):
-        pass
+        """Shows a file dialog to save a file at a directory. Retrieve file name and puts it as a reference to a file"""
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As', str(Path.home()), "Augus files (*.aug)")
+        if fileName[0]:
+            with codecs.open(fileName[0],'w', encoding='utf8') as f:
+                f.write(self.txtInput.toPlainText())
+            self.fileSaved = True
+            self.lblStatus.setText('Saved')
+            self.fileRef = fileName[0]
+            self.setWindowTitle("Augus 0.1 - " + self.fileRef)
 
     def openFile_action(self):
+        """Shows a file dialog to find a file. Retrieve file name and puts it as a reference to a file"""
+        # call new file to verify if actual file is saved
+        self.newFile_action()
         fileName = QtWidgets.QFileDialog.getOpenFileName(self, 'Open', str(Path.home()), "Augus files (*.aug)")
         if fileName[0]:
             with codecs.open(fileName[0],'r', encoding='utf8') as f:
                 self.txtInput.setPlainText(f.read())
+            self.fileSaved = True
+            self.lblStatus.setText('Saved')
+            self.fileRef = fileName[0]
+            self.setWindowTitle("Augus 0.1 - " + self.fileRef)
+
+    def goTo_action(self):
+        """Shows a input dialog. The user must enter a number or a coordinate, then the cursor is settled on that row number or coordinate"""
+        txt, msg = QtWidgets.QInputDialog.getText(
+            self, 'Go To',
+            'Type the row number or a coordinate (row,col)'
+        )
+        if msg:
+            txt = txt.strip()
+            txt = txt.split(",")
+            try:
+                # remove ending and starting spaces
+                tRow = int(txt[0].strip()) 
+                # tRow cannot be less than 1
+                tRow = tRow if tRow > 0 else 1
+                # if txt array lenght is greater then 1 -> cast to int stripped txt[1] 
+                tCol = int(txt[1].strip()) if len(txt) > 1 else 1
+                # input user of tCol cannot be less than 1
+                tCol = tCol if tCol > 0 else 1
+                doc = self.txtInput.document()
+                n = doc.blockCount()
+                if tRow > n:
+                    # tRow is greater than number of lines in txtInput
+                    # replace tRow actual value to number of lines in txtInput
+                    # get index for line number
+                    tRow = n - 1
+                else:
+                    # get index for vertical movement
+                    tRow -= 1
+                self.txtInput.setFocus()
+                # create and set cursor for line number tRow
+                cursor = QtGui.QTextCursor(doc.findBlockByLineNumber(tRow))
+                # gets Textblock
+                crBlock = cursor.block()
+                # gets text's length on textblock
+                lenBlock = len(crBlock.text())
+                # if text's length is less than tCol then the cursor is set at the end of the line
+                tCol = (tCol-1) if tCol <= lenBlock else (lenBlock)
+                # move cursor to tCol
+                cursor.movePosition(QtGui.QTextCursor.Right,QtGui.QTextCursor.MoveAnchor,tCol)
+                # set cursor to txtInput
+                self.txtInput.setTextCursor(cursor)
+            except:
+                QtWidgets.QMessageBox.information(
+                    self, "Error",
+                    "It's not possible to go to the indicated position"
+                )         
+
+    def ascendentDebug_action(self):
+        pass
+    
+    def ascendentRun_action(self):
+        pass
+
+    def descendentRun_action(self):
+        pass
+
+    def txtInputCursorPositionChanged_action(self):
+        txtcursor = self.txtInput.textCursor()
+        txtRow = txtcursor.blockNumber()
+        txtCol = txtcursor.positionInBlock()
+        self.txtCol.setText(str(txtCol+1))
+        self.txtRow.setText(str(txtRow+1))
+        pass
+        
+    def txtInputChanged_action(self):
+        self.fileSaved = False
+        self.lblStatus.setText("Not Saved")
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
