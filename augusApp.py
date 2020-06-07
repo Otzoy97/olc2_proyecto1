@@ -345,10 +345,10 @@ class Ui_augusApp(QtWidgets.QMainWindow):
                 # set cursor to txtInput
                 self.txtInput.setTextCursor(cursor)
             except:
-                QtWidgets.QMessageBox.information(
+                QtWidgets.QMessageBox.critical(
                     self, "Error",
                     "It's not possible to go to the indicated position"
-                )         
+                )
 
     def ascendentDebug_action(self):
         pass
