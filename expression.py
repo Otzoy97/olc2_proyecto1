@@ -32,31 +32,29 @@ class Operator(Enum):
     READ = 28       # read()
     ARRAY = 29      # array()
 
+class ValType(Enum):
+    '''Supported types'''
+    CHAR = 1
+    STRING = 2
+    FLOAT = 3
+    INTEGER = 4
+    POINTER = 5
+    ARRAY = 6
+    STRUCT = 7
+
 class Expression:
     '''
         Abstract class for expressions
     '''
 
-class StringExpression(Expression):
+class ValExpression(Expression):
     '''
     '''
-    def __init__(self, value):
+    def __init__(self, value, type):
         self.value = value
+        self.type = type
 
-
-class FloatExpression(Expression):
-    '''
-    '''
-    def __init__(self,value):
-        self.value = value
-
-class IntegerExpression(Expression):
-    '''
-    '''
-    def __init__(self,value):
-        self.value = value
-
-class ArrayExpression(Expression):
+class ReadExpression(Expression):
     '''
     '''
 
