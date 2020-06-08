@@ -28,7 +28,7 @@ class Operator(Enum):
     AMP = 24        # &
     CINT = 25       # int
     CFLOAT = 26     # float
-    CSTRING = 27    # string
+    CCHAR = 27      # string
     READ = 28       # read()
     ARRAY = 29      # array()
 
@@ -47,21 +47,17 @@ class Expression:
         Abstract class for expressions
     '''
 
-class ValExpression(Expression):
+class ValExpression(Expression):                                                                                  
     '''
     '''
     def __init__(self, value, type):
         self.value = value
         self.type = type
 
-class ReadExpression(Expression):
-    '''
-    '''
-
 class OperationExpression(Expression):
     '''
     '''
-    def __init__(self, op, e1, e2 = None):
+    def __init__(self, op, e1 = None, e2 = None):
         self.e1 = e1
         self.e2 = e2
         self.op = op 
