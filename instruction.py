@@ -15,20 +15,6 @@ class Unset(Instruction):
     def __init__(self, varn):
         self.varn = varn
 
-
-""" class Read(Instruction):
-    '''
-        This class waits for user input and then saves it
-    '''
-    def __init__(self):
-        self.inputVal = ""
-
-class Array(Instruction):
-    '''
-        This class represents the declaration of an array
-    '''
-    def __init__(self) """
-
 class Exit(Instruction):
     '''
         This class represents the end a procedure
