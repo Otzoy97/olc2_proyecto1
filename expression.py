@@ -34,13 +34,14 @@ class Operator(Enum):
 
 class ValType(Enum):
     '''Supported types'''
-    CHAR = 1
+    #CHAR = 1
     STRING = 2
     FLOAT = 3
     INTEGER = 4
-    POINTER = 5
-    ARRAY = 6
-    STRUCT = 7
+    #POINTER = 5
+    #ARRAY = 6
+    #STRUCT = 7
+    REFVAR = 8
 
 class Expression:
     '''

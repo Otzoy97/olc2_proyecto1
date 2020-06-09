@@ -1,5 +1,17 @@
+from enum import Enum
+from expression import ValExpression
+
 class Instruction:
     '''This is an abstract class'''
+
+class RegisterType(Enum):
+    TVAR = 1
+    AVAR = 2
+    VVAR = 3
+    RVAR = 5
+    SVAR = 6
+    SPVAR = 7
+    ARRAY = 8
 
 class Print(Instruction):
     '''
@@ -39,9 +51,10 @@ class Assignment(Instruction):
     '''
         To set a value to a given variable
     '''
-    def __init__(self, varName, exOp):
+    def __init__(self, varName, varType, valExp = []):
         self.varName = varName
-        self.exOp = exOp
+        self.varType = varType
+        self.valExp = valExp
 
 class Label(Instruction):
     '''
