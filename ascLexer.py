@@ -13,9 +13,7 @@ reservedWords = {
 
     'int' : 'INT',
     'float' : 'FLOAT',
-    'char' : 'CHAR',
-
-    'rvar' : 'RVAR'
+    'char' : 'CHAR'
 }
 
 tokens = [
@@ -64,7 +62,7 @@ t_PARDER        = r'\)'
 t_PARIZQ        = r'\('
 t_SCOLON        = r';'
 t_COLON         = r':'
-t_PLUS          = r'-'
+t_MINUS          = r'-'
 t_PLUS          = r'\+'
 t_TIMES         = r'\*'
 t_QUOTIENT      = r'/'
@@ -88,7 +86,9 @@ t_LSE           = r'<='
 t_TVAR          = r'\$t\d+'
 t_AVAR          = r'\$a\d+'
 t_VVAR          = r'\$v\d+'
+t_RVAR          = r'\$ra'
 t_SVAR          = r'\$s\d+'
+t_SPVAR          = r'\$sp'
 
 def t_FLOAT_VAL(t):
     r'\d+\.\d+'
@@ -96,6 +96,7 @@ def t_FLOAT_VAL(t):
         t.value = float(t.value)
     except:
         t.value = 0.0
+    print(t)
     return t
 
 def t_INT_VAL(t):
@@ -104,20 +105,22 @@ def t_INT_VAL(t):
         t.value = int(t.value)
     except:
         t.value = 0
+    print(t)
     return t
 
 def t_STRING_VAL(t):
     r'\".*?\"'
     t.value = t.value[1:-1]
+    print(t)
     return t
 
 def t_LBS(t):
-    r'\w*'
+    r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reservedWords.get(t.value.lower(), 'LBS')
     return t
 
 def t_COMMENT(t):
-    r'#.*\n'
+    r'\#.*\n'
     t.lexer.lineno += 1
 
 t_ignore = " \t"
@@ -131,13 +134,19 @@ def t_error(t):
     print ("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
+import ply.lex as lex
+lexer = lex.lex()
+
 from expression import *
 from instruction import *
-from augusApp import *
 
 def p_init(t):
-    '''init  : list'''
+    '''init  : list '''
     t[0] = t[1]
+
+def p_init1(t):
+    '''init : empty '''
+    pass
 
 def p_list2(t):
     '''list : ist'''
@@ -163,13 +172,17 @@ def p_ist_cdJmp(t):
     t[0] = [cdJmp]
 
 def p_ist_lbs(t):
-    '''ist  : LBS SCOLON'''
+    '''ist  : LBS COLON'''
     Lbl = Label(t[1])
     t[0] = [Lbl]
 
 def p_ist_ntv(t):
-    '''ist  : ntv COLON'''
+    '''ist  : ntv SCOLON'''
     t[0] = [t[1]]
+
+def p_empty(t):
+    '''empty : '''
+    pass
 
 def p_ntv_unset(t):
     '''ntv  : UNSET PARIZQ idt PARDER'''
@@ -308,7 +321,8 @@ def p_uopr(t):
     '''opr  : MINUS opn
             | NOT opn
             | NOTBW opn
-            | ANDBW idt'''
+            | ANDBW idt
+            | ABS PARIZQ opn PARDER'''
     if t[1] == '-':
         t[0] = OperationExpression(Operator.MINUS, t[2])
     elif t[1] == '!':
@@ -317,6 +331,8 @@ def p_uopr(t):
         t[0] = OperationExpression(Operator.NOTBW, t[2])
     elif t[1] == '&':
         t[0] = OperationExpression(Operator.AMP, t[2])
+    elif t[1] == 'abs':
+        t[0] = OperationExpression(Operator.ABS, t[3])
             
 def p_copr(t):
     '''opr  : PARIZQ INT PARDER idt
@@ -329,17 +345,22 @@ def p_copr(t):
     elif t[2] == 'char':
         t[0] = OperationExpression(Operator.CCHAR, t[4])
 
+def p_opn_opr(t):
+    '''opr  : opn'''
+    print(t[1])
+    t[0] = t[1]
+
 def p_opnf(t):
     '''opn  : FLOAT_VAL'''
-    t[0] == ValExpression(t[1],ValType.FLOAT)
+    t[0] = ValExpression(t[1],ValType.FLOAT)
 
 def p_opni(t):
     '''opn  : INT_VAL'''
-    t[0] == ValExpression(t[1],ValType.INTEGER)
+    t[0] = ValExpression(t[1],ValType.INTEGER)
 
 def p_opns(t):
     '''opn  : STRING_VAL'''
-    t[0] == ValExpression(t[1],ValType.STRING)
+    t[0] = ValExpression(t[1],ValType.STRING)
 
 def p_opnr(t):
     '''opn  : idt'''
@@ -347,6 +368,17 @@ def p_opnr(t):
 
 def p_error(t):
     #TODO: find a way to print directly to console
-    txtPrev = augusApp. .txtOutput.toPlainText()
-    txtPrev += str(t) + "\nSyntax error at '%s' ('%d', '%d')" % (t.value, t.lineno, t)
-    augusApp.txtOutput.setPlainText()
+    print(t)
+    #print("Syntax error at '%s' ('%d')" % t.value)
+    try:
+        print("Syntax error at '%s'" % t.value)
+    except:
+        pass
+    #txtPrev += str(t) + "\nSyntax error at '%s' ('%d', '%d')" % (t.value, t.lineno, t)
+    #augusApp.txtOutput.setPlainText()
+
+import ply.yacc as yacc
+parser = yacc.yacc()
+
+def parse(input):
+    return parser.parse(input)
