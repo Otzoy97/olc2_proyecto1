@@ -3,6 +3,10 @@ import codecs
 from pathlib import Path
 from PyQt5 import QtCore, QtGui, QtWidgets
 from QCodeEditor import QCodeEditor
+from ascLexer import parse, parser
+from ascAST import createAST
+#from expression import *
+#from instruction import *
 
 class Ui_augusApp(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
@@ -354,7 +358,15 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         pass
     
     def ascendentRun_action(self):
-        pass
+        txt = self.txtInput.toPlainText()
+        print('starting parsing...\n')
+        createAST(txt)
+        astRunner = parse(txt)
+        parser.restart()
+        #for i in inst:
+        #    print(i)
+        #    print('\n')
+        #ascParser_AST.restart() 
 
     def descendentRun_action(self):
         pass
