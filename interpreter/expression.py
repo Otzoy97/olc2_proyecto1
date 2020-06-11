@@ -34,31 +34,16 @@ class Operator(Enum):
 
 class ValType(Enum):
     '''Supported types'''
-    #CHAR = 1
+    CHAR = 1
     STRING = 2
     FLOAT = 3
     INTEGER = 4
-    #POINTER = 5
-    #ARRAY = 6
-    #STRUCT = 7
+    POINTER = 5
+    ARRAY = 6
+    STRUCT = 7
     REFVAR = 8
 
 class Expression:
     '''
         Abstract class for expressions
     '''
-
-class ValExpression(Expression):                                                                                  
-    '''
-    '''
-    def __init__(self, value, type):
-        self.value = value
-        self.type = type
-
-class OperationExpression(Expression):
-    '''
-    '''
-    def __init__(self, op, e1 = None, e2 = None):
-        self.e1 = e1
-        self.e2 = e2
-        self.op = op 
