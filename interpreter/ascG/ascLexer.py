@@ -91,27 +91,24 @@ t_SVAR          = r'\$s\d+'
 t_SPVAR          = r'\$sp'
 
 def t_FLOAT_VAL(t):
-    r'\d+\.\d+'
+    r'(\+|-)?\d+\.\d+'
     try:
         t.value = float(t.value)
     except:
         t.value = 0.0
-    print(t)
     return t
 
 def t_INT_VAL(t):
-    r'\d+'
+    r'(\+|-)?\d+'
     try:
         t.value = int(t.value)
     except:
         t.value = 0
-    print(t)
     return t
 
 def t_STRING_VAL(t):
     r'\".*?\"'
     t.value = t.value[1:-1]
-    print(t)
     return t
 
 def t_LBS(t):
@@ -137,8 +134,9 @@ def t_error(t):
 import ply.lex as lex
 lexer = lex.lex()
 
-from expression import *
-from instruction import *
+from operation import ValExpression, OperationExpression
+from expression import ValType, Operator
+from instruction import Assignment, If, GoTo, Label, Print, Unset, Exit, RegisterType
 
 def p_init(t):
     '''init  : list '''
@@ -324,7 +322,7 @@ def p_uopr(t):
             | ANDBW idt
             | ABS PARIZQ opn PARDER'''
     if t[1] == '-':
-        t[0] = OperationExpression(Operator.MINUS, t[2])
+        t[0] = OperationExpression(Operator.NEGATIVE, t[2])
     elif t[1] == '!':
         t[0] = OperationExpression(Operator.NOT, t[2])
     elif t[1] == '~':
@@ -333,7 +331,7 @@ def p_uopr(t):
         t[0] = OperationExpression(Operator.AMP, t[2])
     elif t[1] == 'abs':
         t[0] = OperationExpression(Operator.ABS, t[3])
-            
+
 def p_copr(t):
     '''opr  : PARIZQ INT PARDER idt
             | PARIZQ FLOAT PARDER idt
@@ -347,7 +345,6 @@ def p_copr(t):
 
 def p_opn_opr(t):
     '''opr  : opn'''
-    print(t[1])
     t[0] = t[1]
 
 def p_opnf(t):
