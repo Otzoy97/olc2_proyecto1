@@ -3,22 +3,19 @@ class AscNode:
         self.val = val
         self.children = []
 
-    def add(self, node = AscNode):
+    def add(self, node):
         self.children.append(node)
 
 reservedWords = {
     'if' : 'IF',
     'goto' : 'GOTO',
-
     'read' : 'READ',
     'array' : 'ARRAY',
     'unset' : 'UNSET',
     'print' : 'PRINT',
     'exit' : 'EXIT',
-
     'abs' : 'ABS',
     'xor' : 'XOR',
-
     'int' : 'INT',
     'float' : 'FLOAT',
     'char' : 'CHAR'
@@ -160,7 +157,7 @@ def p_list1(t):
 
 def p_ist_assign(t):
     '''ist  : idt ASSIGN opr SCOLON'''
-    t[0] = AscNode('Asignacion')
+    t[0] = AscNode('Assign')
     t[0].add(t[1])
     t[0].add(t[3])
 
@@ -178,7 +175,7 @@ def p_ist_cdJmp(t):
 
 def p_ist_lbs(t):
     '''ist  : LBS COLON'''
-    t[0] = AscNode('Etiqueta')
+    t[0] = AscNode('Label')
     r = AscNode(t[1])
     t[0].add(r)
 
@@ -208,14 +205,19 @@ def p_idt_dml(t):
     '''idt  : vrn dml'''
     t[0] = t[1]
     for i in t[2]:
-        t[0].append(i)
+        t[0].add(i)
 
 def p_idt(t):
     '''idt  : vrn '''
     t[0] = t[1]
 
 def p_vrn(t):
-    '''vrn  : TVAR | AVAR | VVAR | SVAR | SPVAR | RVAR'''
+    '''vrn  : TVAR 
+    | AVAR 
+    | VVAR 
+    | SVAR 
+    | SPVAR 
+    | RVAR'''
     t[0] = AscNode(t[1])
 
 def p_dml1(t):
@@ -228,7 +230,8 @@ def p_dml2(t):
     t[0] = [t[1]]
 
 def p_dmn_int(t):
-    '''dmn  : CORIZQ INT_VAL CORDER | CORIZQ STRING_VAL CORDER'''
+    '''dmn  : CORIZQ INT_VAL CORDER 
+    | CORIZQ STRING_VAL CORDER'''
     t[0] = AscNode(t[2])
 
 def p_dmn_idt(t):
@@ -292,7 +295,9 @@ def p_opn_opr(t):
     t[0] = t[1]
 
 def p_opnf(t):
-    '''opn  : FLOAT_VAL | INT_VAL | STRING_VAL'''
+    '''opn  : FLOAT_VAL 
+    | INT_VAL 
+    | STRING_VAL'''
     t[0] = AscNode(t[1])
 
 def p_opnr(t):
@@ -300,27 +305,46 @@ def p_opnr(t):
     t[0] = t[1]
 
 def p_error(t):
+    #print(t)
     pass
 
-import ply.yacc as yacc
+import ply.yacc as y
 from graphviz import Digraph
-parser = yacc.yacc()
+from datetime import datetime
+
+parser = y.yacc()
 dot = Digraph(comment='ascAST')
 
-def parse(input):
+def createAST(input):
+    '''
+        Construct an ast tree from the root that the parser return
+    '''
     root = parser.parse(input)
-    dot.node(id(root),'S')
-    for i in root:
-        dot.node(id(i), i.val)
-        dot.edge(id(root), id(i))
-        createAST(i)
-    print(dot.source)
+    if root:
+        # if root is not None
+        dot.node(str(id(root)),'S')
+        for i in root:
+            dot.node(str(id(i)), str(i.val))
+            dot.edge(str(id(root)), str(id(i)))
+            travelTree(i)
+    #print(dot.source)
+    #retrieve actual date and time
+    now = datetime.now()
+    fstr = now.strftime("%d%m%y-%H%M%S")
+    #render the graph
+    dot.render('ascAST'+fstr,'report',False,True,'png')
+    #clear the stack parser
+    parser.restart()
+    #clear the dot body
+    dot.clear()
 
-
-def createAST(root):
+def travelTree(root):
+    '''
+        Recursively goes through the nodes and construct an ast tree
+    '''
     for i in root.children:
-        dot.node(id(i), i.val)
-        dot.edge(id(root), id(i))
-        createAST(i)
+        dot.node(str(id(i)), str(i.val))
+        dot.edge(str(id(root)), str(id(i)))
+        travelTree(i)
 
 
