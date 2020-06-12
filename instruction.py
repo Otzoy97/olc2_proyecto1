@@ -36,16 +36,18 @@ class If(Instruction):
     '''
         This class make decisions upon a boolean given value 
     '''
-    def __init__(self, bolVal, lblJmp):
+    def __init__(self, bolVal, lblJmp, row):
         self.bolVal = bolVal
         self.lblJmp = lblJmp
+        self.row = row
 
 class GoTo(Instruction):
     '''
         To make a jump to a given label 
     '''
-    def __init__(self, lblJmp):
+    def __init__(self, lblJmp, row):
         self.lblJmp = lblJmp
+        self.row = row
 
 class Assignment(Instruction):
     '''
@@ -64,5 +66,6 @@ class Label(Instruction):
         Sets a label name that is then used to make a jump 
         inside the code
     '''
-    def __init__(self, lblNm):
+    def __init__(self, lblNm, row):
         self.lblNm = lblNm
+        self.row = row
