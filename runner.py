@@ -164,8 +164,6 @@ def solve_oper(i):
             tmpl_n = 0 if opl.value != 0 else 1
             tmpr_n = 0 if opl.value != 0 else 1
             return Symbol(None, ValType.INTEGER, (tmpl and tmpr_n)  or (tmpl_n and tmpr))
-
-        pass
     elif i.op == Operator.OR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
@@ -178,32 +176,65 @@ def solve_oper(i):
             tmpr = 0 if opr.value == 0 else 1
             return Symbol(None, ValType.INTEGER, tmpl or tmpr)
         pass
-    elif i.op == Operator.NOTBW:#TODO:
+    elif i.op == Operator.NOTBW:
         opl = solve_val(i.e1)
-        pass
-    elif i.op == Operator.ANDBW:#TODO:
-        opl = solve_val(i.e1)
-        opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.ORBW:#TODO:
-        opl = solve_val(i.e1)
-        opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.XORBW:#TODO:
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't negate a string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = ~int(opl.value)
+            return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.ANDBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.SHL:#TODO:
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't use and-bitwise on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = int(opl.value) & int(opr.value)
+            return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.ORBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.SHR:#TODO:
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't use or-bitwise on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = int(opl.value) | int(opr.value)
+            return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.XORBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't use xor-bitwise on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = int(opl.value) ^ int(opr.value)
+            return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.SHL:
+        opl = solve_val(i.e1)
+        opr = solve_val(i.e2)
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't use shift-left on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = int(opl.value) << int(opr.value)
+            return Symbol(None, ValType.INTEGER, temp)
+        pass
+    elif i.op == Operator.SHR:
+        opl = solve_val(i.e1)
+        opr = solve_val(i.e2)
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't use shift-right on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = int(opl.value) >> int(opr.value)
+            return Symbol(None, ValType.INTEGER, temp)
         pass
     elif i.op == Operator.EQ:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
+
         pass
     elif i.op == Operator.NEQ:#TODO:
         opl = solve_val(i.e1)
