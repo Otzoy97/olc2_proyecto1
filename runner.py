@@ -140,17 +140,43 @@ def solve_oper(i):
         else:
             temp = 0 if opl.value != 0 else 1
             return Symbol(None, ValType.INTEGER, temp)
-    elif i.op == Operator.AND:#TODO:
+    elif i.op == Operator.AND:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't compare strings %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmpl = 0 if opl.value == 0 else 1
+            tmpr = 0 if opr.value == 0 else 1
+            return Symbol(None, ValType.INTEGER, tmpl and tmpr)
+    elif i.op == Operator.XOR:
+        opl = solve_val(i.e1)
+        opr = solve_val(i.e2)
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't compare strings %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmpl = 0 if opl.value == 0 else 1
+            tmpr = 0 if opr.value == 0 else 1
+            tmpl_n = 0 if opl.value != 0 else 1
+            tmpr_n = 0 if opl.value != 0 else 1
+            return Symbol(None, ValType.INTEGER, (tmpl and tmpr_n)  or (tmpl_n and tmpr))
+
         pass
-    elif i.op == Operator.XOR:#TODO:
+    elif i.op == Operator.OR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.OR:#TODO:
-        opl = solve_val(i.e1)
-        opr = solve_val(i.e2)
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't compare strings %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmpl = 0 if opl.value == 0 else 1
+            tmpr = 0 if opr.value == 0 else 1
+            return Symbol(None, ValType.INTEGER, tmpl or tmpr)
         pass
     elif i.op == Operator.NOTBW:#TODO:
         opl = solve_val(i.e1)
