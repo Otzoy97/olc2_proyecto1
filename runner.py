@@ -2,6 +2,8 @@ from expression import ValType, Operator
 from instruction import ValExpression, RegisterType
 import operation
 from st import Symbol, SymbolTable
+from math import trunc
+from PyQt5 import QtWidgets
 
 t_reg = SymbolTable()
 a_reg = SymbolTable()
@@ -142,73 +144,77 @@ def solve_oper(i):
         pass
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
-        r = Symbol(None, ValType.CHAR, 0)
+        r = Symbol(None, ValType.INTEGER, 0)
         if opr.type == ValType.CHAR:        r.val = int(opr.value)
         elif opr.type == ValType.STRING:    r.val = ord(getFirst(opr.value)) % 256
-        elif opr.type == ValType.FLOAT:     r.val = float(opr.value)
-        if opr.type == ValType.INTEGER:     r.val = opr.value
+        elif opr.type == ValType.FLOAT:     r.val = trunc(opr.value)
+        elif opr.type == ValType.INTEGER:   r.val = opr.value
         elif opr.type == ValType.POINTER:   
-            pass
-        elif opr.type == ValType.ARRAY:     r.val = 
-        if opr.type == ValType.STRUCT:
-            print(opr.type, ' cannot cast to char (')
-        elif opr.type == ValType.STRING:
-            pass
+            print(opr.type, ' cannot cast to int ', i.row)
+        elif opr.type == ValType.ARRAY:
+            tmp = getFirst(opr.value) #get first value
+            if isinstance(tmp, str):        r.val = ord(tmp) % 256
+            elif isinstance(tmp, float):    r.val = trunc(tmp)
+            elif isinstance(tmp, int):      r.val = tmp
+            else:                           print(opr.type, ' cannot cast to int', i.row)
+        elif opr.type == ValType.STRUCT:
+            print(opr.type, ' cannot cast to int ', i.row)
         return r
     elif (i.op == Operator.CFLOAT):
         opr = solve_val(i.e1)
-        r = Symbol(None, ValType.CHAR, 0)
-        if opr.type == ValType.CHAR:
-            pass
-        elif opr.type == ValType.STRING:
-            pass
-        elif opr.type == ValType.FLOAT:
-            pass
-        if opr.type == ValType.INTEGER:
-            pass
-        elif opr.type == ValType.POINTER:
-            pass
+        r = Symbol(None, ValType.FLOAT, 0)
+        if opr.type == ValType.CHAR:        r.val = float(opr.value)
+        elif opr.type == ValType.STRING:    r.val = float(ord(getFirst(opr.value)) % 256)
+        elif opr.type == ValType.FLOAT:     r.val = opr.value
+        elif opr.type == ValType.INTEGER:   r.val = float(opr.value)
+        elif opr.type == ValType.POINTER:   
+            print(opr.type, ' cannot cast to float ', i.row)
         elif opr.type == ValType.ARRAY:
-            pass
-        if opr.type == ValType.STRUCT:
-            print(opr.type, ' cannot cast to char (')
-        elif opr.type == ValType.STRING:
-            pass
+            tmp = getFirst(opr.value) #get first value
+            if isinstance(tmp, str):        r.val = float(ord(tmp) % 256)
+            elif isinstance(tmp, float):    r.val = tmp
+            elif isinstance(tmp, int):      r.val = float(tmp)
+            else:                           print(opr.type, ' cannot cast to float', i.row)
+        elif opr.type == ValType.STRUCT:
+            print(opr.type, ' cannot cast to float ', i.row)
         return r
     elif (i.op == Operator.CCHAR):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.CHAR, 0)
-        if opr.type == ValType.CHAR:
-            pass
-        elif opr.type == ValType.STRING:
-            pass
-        elif opr.type == ValType.FLOAT:
-            pass
-        if opr.type == ValType.INTEGER:
-            pass
-        elif opr.type == ValType.POINTER:
-            pass
+        if opr.type == ValType.CHAR:        r.val = opr.value
+        elif opr.type == ValType.STRING:    r.val = ord(getFirst(opr.value)) % 256
+        elif opr.type == ValType.FLOAT:     r.val = trunc(opr.value) % 256
+        elif opr.type == ValType.INTEGER:   r.val = opr.value % 256
+        elif opr.type == ValType.POINTER:   
+            print(opr.type, ' cannot cast to char ', i.row)
         elif opr.type == ValType.ARRAY:
-            pass
-        if opr.type == ValType.STRUCT:
-            print(opr.type, ' cannot cast to char (')
-        elif opr.type == ValType.STRING:
-            pass
+            tmp = getFirst(opr.value) #get first value
+            if isinstance(tmp, str):        r.val = ord(getFirst(opr.value)) % 256
+            elif isinstance(tmp, float):    r.val = trunc(opr.value) % 256
+            elif isinstance(tmp, int):      r.val = float(tmp)
+            else:                           print(opr.type, ' cannot cast to float', i.row)
+        elif opr.type == ValType.STRUCT:
+            print(opr.type, ' cannot cast to char ', i.row)
         return r
     elif i.op == Operator.READ:
-        pass
+        # shows an input box and save a string
+        # creates an string symbol
+        r = Symbol(None, ValType.STRING, "")
+        txt, msg = QtWidgets.QInputDialog.getText(None, 'Read')
+        if msg:
+            r.val = txt
+        return r
     elif i.op == Operator.ARRAY:
-        pass
+        # creates an array symbol
+        r = Symbol(None,ValType.ARRAY, None)
+        return r
 
 def getFirst(arr):
     try:
-        if isinstance(arr, list):   getFirst(arr[0])
-        elif isinstance(arr, str):
-
-            return arr[0]
-        else:
-            return arr
-    except Exception as e: return 0
+        if isinstance(arr, list):  getFirst(arr[0])
+        elif isinstance(arr, str): return arr[0]
+        else: return arr
+    except: return 0
 
 
 
