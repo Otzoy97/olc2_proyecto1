@@ -187,7 +187,8 @@ def solve_oper(i):
     elif i.op == Operator.ANDBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        if opl.type == ValType.STRING:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
             print("Semantic error: can't use and-bitwise on string %d", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         else:
@@ -196,7 +197,8 @@ def solve_oper(i):
     elif i.op == Operator.ORBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        if opl.type == ValType.STRING:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
             print("Semantic error: can't use or-bitwise on string %d", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         else:
@@ -205,7 +207,8 @@ def solve_oper(i):
     elif i.op == Operator.XORBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        if opl.type == ValType.STRING:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
             print("Semantic error: can't use xor-bitwise on string %d", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         else:
@@ -214,51 +217,76 @@ def solve_oper(i):
     elif i.op == Operator.SHL:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        if opl.type == ValType.STRING:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
             print("Semantic error: can't use shift-left on string %d", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         else:
             temp = int(opl.value) << int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
-        pass
     elif i.op == Operator.SHR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        if opl.type == ValType.STRING:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
             print("Semantic error: can't use shift-right on string %d", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         else:
             temp = int(opl.value) >> int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
-        pass
-    elif i.op == Operator.EQ:#TODO:
+    elif i.op == Operator.EQ:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-
-        pass
-    elif i.op == Operator.NEQ:#TODO:
+        tmp = 1 if (opl.value == opr.value) else 0
+        return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.NEQ:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.GR:#TODO:
+        tmp = 1 if (opl.value != opr.value) else 0
+        return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.GR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.GRE:#TODO:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't use 'greater than' on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmp = 1 if (opl.value > opr.value) else 0
+            return Symbol(None, ValType.INTEGER, tmp)
+    elif i.op == Operator.GRE:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.LS:#TODO:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't use 'greater than or equal' on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmp = 1 if (opl.value >= opr.value) else 0
+            return Symbol(None, ValType.INTEGER, tmp)
+    elif i.op == Operator.LS:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.LSE:#TODO:
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't use 'less than' on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmp = 1 if (opl.value < opr.value) else 0
+            return Symbol(None, ValType.INTEGER, tmp)
+    elif i.op == Operator.LSE:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.AMP:#TODO:
-        opr = solve_val(i.e1)
-        pass
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't use 'less than or equal' on string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            tmp = 1 if (opl.value <= opr.value) else 0
+            return Symbol(None, ValType.INTEGER, tmp)
+    elif i.op == Operator.AMP:
+        # stores de whole object (name, typeval, array access)
+        return Symbol(None, ValType.POINTER, i)
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.INTEGER, 0)
