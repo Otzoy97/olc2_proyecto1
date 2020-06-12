@@ -124,7 +124,7 @@ t_ignore = " \t"
 
 def t_newline(t):
     r'\n+'
-    t.lexer.lineno += t.value.count("\n")
+    t.lexer.lineno += len("\n")
 
 def t_error(t):
     #TODO: find a way to print directly to console
@@ -161,17 +161,17 @@ def p_ist_assign(t):
 
 def p_ist_unJmp(t):
     '''ist  : GOTO LBS SCOLON'''
-    gt = GoTo(t[2])
+    gt = GoTo(t[2], t.lineno(1))
     t[0] = [gt]
 
 def p_ist_cdJmp(t):
     '''ist  : IF PARIZQ opr PARDER GOTO LBS SCOLON'''
-    cdJmp = If(t[3],t[6])
+    cdJmp = If(t[3],t[6], t.lineno(1))
     t[0] = [cdJmp]
 
 def p_ist_lbs(t):
     '''ist  : LBS COLON'''
-    Lbl = Label(t[1])
+    Lbl = Label(t[1], t.lineno(1))
     t[0] = [Lbl]
 
 def p_ist_ntv(t):
@@ -270,50 +270,50 @@ def p_bopr(t):
             | opn LS opn
             | opn LSE opn'''
     if t[2] == '+':
-        t[0] = OperationExpression(Operator.PLUS, t[1], t[3] )
+        t[0] = OperationExpression(Operator.PLUS, t[1], t[3],t.lineno(1))
     elif t[2] == '-':
-        t[0] = OperationExpression(Operator.MINUS, t[1], t[3] )
+        t[0] = OperationExpression(Operator.MINUS, t[1], t[3] ,t.lineno(1))
     elif t[2] == '*':
-        t[0] = OperationExpression(Operator.TIMES, t[1], t[3] )
+        t[0] = OperationExpression(Operator.TIMES, t[1], t[3], t.lineno(1))
     elif t[2] == '/':
-        t[0] = OperationExpression(Operator.QUOTIENT, t[1], t[3] )
+        t[0] = OperationExpression(Operator.QUOTIENT, t[1], t[3] ,t.lineno(1))
     elif t[2] == '%':
-        t[0] = OperationExpression(Operator.REMAINDER, t[1], t[3] )
+        t[0] = OperationExpression(Operator.REMAINDER, t[1], t[3],t.lineno(1))
     elif t[2] == '&&':
-        t[0] = OperationExpression(Operator.AND, t[1], t[3] )
+        t[0] = OperationExpression(Operator.AND, t[1], t[3] ,t.lineno(1))
     elif t[2] == 'xor':
-        t[0] = OperationExpression(Operator.XOR, t[1], t[3] )
+        t[0] = OperationExpression(Operator.XOR, t[1], t[3] ,t.lineno(1))
     elif t[2] == '&':
-        t[0] = OperationExpression(Operator.ANDBW, t[1], t[3] )
+        t[0] = OperationExpression(Operator.ANDBW, t[1], t[3] ,t.lineno(1))
     elif t[2] == '|':
-        t[0] = OperationExpression(Operator.ORBW, t[1], t[3] )
+        t[0] = OperationExpression(Operator.ORBW, t[1], t[3] ,t.lineno(1))
     elif t[2] == '^':
-        t[0] = OperationExpression(Operator.XORBW, t[1], t[3] )
+        t[0] = OperationExpression(Operator.XORBW, t[1], t[3] ,t.lineno(1))
     elif t[2] == '<<':
-        t[0] = OperationExpression(Operator.SHL, t[1], t[3] )
+        t[0] = OperationExpression(Operator.SHL, t[1], t[3] ,t.lineno(1))
     elif t[2] == '>>':
-        t[0] = OperationExpression(Operator.SHR, t[1], t[3] )
+        t[0] = OperationExpression(Operator.SHR, t[1], t[3] ,t.lineno(1))
     elif t[2] == '==':
-        t[0] = OperationExpression(Operator.EQ, t[1], t[3] )
+        t[0] = OperationExpression(Operator.EQ, t[1], t[3] ,t.lineno(1))
     elif t[2] == '!=':
-        t[0] = OperationExpression(Operator.NEQ, t[1], t[3] )
+        t[0] = OperationExpression(Operator.NEQ, t[1], t[3] ,t.lineno(1))
     elif t[2] == '>':
-        t[0] = OperationExpression(Operator.GR, t[1], t[3] )
+        t[0] = OperationExpression(Operator.GR, t[1], t[3] ,t.lineno(1))
     elif t[2] == '>=':
-        t[0] = OperationExpression(Operator.GRE, t[1], t[3] )
+        t[0] = OperationExpression(Operator.GRE, t[1], t[3] ,t.lineno(1))
     elif t[2] == '<':
-        t[0] = OperationExpression(Operator.LS, t[1], t[3] )
+        t[0] = OperationExpression(Operator.LS, t[1], t[3] ,t.lineno(1))
     elif t[2] == '<=':
-        t[0] = OperationExpression(Operator.LSE, t[1], t[3] )
+        t[0] = OperationExpression(Operator.LSE, t[1], t[3] ,t.lineno(1))
 
 def p_nopr(t):
     '''opr  : READ PARIZQ PARDER
             | ARRAY PARIZQ PARDER'''
     if t[1] == 'read':
-        t[0] = OperationExpression(Operator.READ)
+        t[0] = OperationExpression(Operator.READ, None, None,t.lineno(1))
     elif t[1] == 'array':
         # TODO: indicate de value to store something like a dictionary
-        t[0] = OperationExpression(Operator.ARRAY)
+        t[0] = OperationExpression(Operator.ARRAY, None, None,t.lineno(1))
             
 def p_uopr(t):
     '''opr  : MINUS opn
@@ -322,26 +322,26 @@ def p_uopr(t):
             | ANDBW idt
             | ABS PARIZQ opn PARDER'''
     if t[1] == '-':
-        t[0] = OperationExpression(Operator.NEGATIVE, t[2])
+        t[0] = OperationExpression(Operator.NEGATIVE, t[2], None,t.lineno(1))
     elif t[1] == '!':
-        t[0] = OperationExpression(Operator.NOT, t[2])
+        t[0] = OperationExpression(Operator.NOT, t[2], None,t.lineno(1))
     elif t[1] == '~':
-        t[0] = OperationExpression(Operator.NOTBW, t[2])
+        t[0] = OperationExpression(Operator.NOTBW, t[2], None,t.lineno(1))
     elif t[1] == '&':
-        t[0] = OperationExpression(Operator.AMP, t[2])
+        t[0] = OperationExpression(Operator.AMP, t[2], None,t.lineno(1))
     elif t[1] == 'abs':
-        t[0] = OperationExpression(Operator.ABS, t[3])
+        t[0] = OperationExpression(Operator.ABS, t[3], None,t.lineno(1))
 
 def p_copr(t):
     '''opr  : PARIZQ INT PARDER idt
             | PARIZQ FLOAT PARDER idt
             | PARIZQ CHAR PARDER idt'''
     if t[2] == 'int':
-        t[0] = OperationExpression(Operator.CINT, t[4])
+        t[0] = OperationExpression(Operator.CINT, t[4], None,t.lineno(1))
     elif t[2] == 'float':
-        t[0] = OperationExpression(Operator.CFLOAT, t[4])
+        t[0] = OperationExpression(Operator.CFLOAT, t[4], None,t.lineno(1))
     elif t[2] == 'char':
-        t[0] = OperationExpression(Operator.CCHAR, t[4])
+        t[0] = OperationExpression(Operator.CCHAR, t[4], None,t.lineno(1))
 
 def p_opn_opr(t):
     '''opr  : opn'''

@@ -319,6 +319,7 @@ def createAST(input):
     '''
         Construct an ast tree from the root that the parser return
     '''
+    lexer.lineno = 1
     root = parser.parse(input)
     if root:
         # if root is not None

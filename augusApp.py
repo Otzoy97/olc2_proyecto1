@@ -3,7 +3,7 @@ import codecs
 from pathlib import Path
 from PyQt5 import QtCore, QtGui, QtWidgets
 from QCodeEditor import QCodeEditor
-from ascLexer import parse, parser
+from ascLexer import parse as ascParse, parser as ascParser, lexer as ascLexer
 from ascAST import createAST
 #from expression import *
 #from instruction import *
@@ -358,12 +358,13 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         pass
     
     def ascendentRun_action(self):
+        ascLexer.lineno = 1
         txt = self.txtInput.toPlainText()
         print('starting parsing...\n')
         createAST(txt)
-        astRunner = parse(txt)
-        parser.restart()
-        #for i in inst:
+        astRunner = ascParse(txt)
+        ascParser.restart()
+        #foascParserr i in inst:
         #    print(i)
         #    print('\n')
         #ascParser_AST.restart() 
