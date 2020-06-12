@@ -52,94 +52,154 @@ def solve_oper(i):
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
-        if ValType.STRING in typear:
-            r = Symbol(None, ValType.STRING, str(opl) + str(opr))            
-            pass
+        if any(i is ValType.STRING for i in typear):
+            return Symbol(None, ValType.STRING, str(opl.value) + str(opr.value))
+        elif any(i is ValType.FLOAT for i in typear):
+            return Symbol(None, ValType.FLOAT, float(opl.value + opr.value))
+        elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
+            return Symbol(None, ValType.INTEGER, int(opl.value + opr.value))
     elif i.op == Operator.MINUS:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't substract strings %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        elif any(i is ValType.FLOAT for i in typear):
+            return Symbol(None, ValType.FLOAT, float(opl.value - opr.value))
+        elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
+            return Symbol(None, ValType.INTEGER, int(opl.value - opr.value))
     elif i.op == Operator.TIMES:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't multiply strings %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        elif any(i is ValType.FLOAT for i in typear):
+            return Symbol(None, ValType.FLOAT, float(opl.value * opr.value))
+        elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
+            return Symbol(None, ValType.INTEGER, int(opl.value * opr.value))
     elif i.op == Operator.QUOTIENT:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't divide strings %d", i.row)
+            return Symbol(None, ValType.FLOAT, 0.0)
+        else:
+            if opr.value == 0:
+                print("Semantic error: division by zero")
+                return Symbol(None, ValType.FLOAT, 0.0)
+            else:
+                return Symbol(None, ValType.FLOAT, opl.value / opr.value)
     elif i.op == Operator.REMAINDER:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        pass
+        typear = [opl.type, opr.type]
+        if any(i is ValType.STRING for i in typear):
+            print("Semantic error: can't get remainder from strings %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        elif any(i is ValType.FLOAT for i in typear):
+            if opr.value == 0:
+                print("Semantic error: division by zero")
+                return Symbol(None, ValType.FLOAT, 0.0)
+            else:
+                return Symbol(None, ValType.FLOAT, float(opl.value % opr.value))
+        elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
+            if opr.value == 0:
+                print("Semantic error: division by zero")
+                return Symbol(None, ValType.INTEGER, 0)
+            else:
+                return Symbol(None, ValType.INTEGER, int(opl.value % opr.value))
     elif i.op == Operator.NEGATIVE:
         opl = solve_val(i.e1)
-        pass
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't get a negative value from string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        elif opl.type == ValType.FLOAT:
+            return Symbol(None, ValType.FLOAT, float(opl.value*-1))
+        elif (opl.type == ValType.INTEGER or  opl.type == ValType.CHAR) :
+            return Symbol(None, ValType.INTEGER, int(opl.value*-1))
     elif i.op == Operator.ABS:
         opl = solve_val(i.e1)
-        pass
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't get absolute value from string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        elif opl.type == ValType.FLOAT:
+            return Symbol(None, ValType.FLOAT, abs(opl.value))
+        elif opl.type == ValType.INTEGER:
+            return Symbol(None, ValType.INTEGER, abs(opl.value))
+        elif opl.type == ValType.CHAR:
+            return Symbol(None, ValType.CHAR, opl.value)
     elif i.op == Operator.NOT:
         opl = solve_val(i.e1)
-        pass
-    elif i.op == Operator.AND:
+        if opl.type == ValType.STRING:
+            print("Semantic error: can't negate a string %d", i.row)
+            return Symbol(None, ValType.INTEGER, 0)
+        else:
+            temp = 0 if opl.value != 0 else 1
+            return Symbol(None, ValType.INTEGER, temp)
+    elif i.op == Operator.AND:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.XOR:
+    elif i.op == Operator.XOR:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.OR:
+    elif i.op == Operator.OR:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.NOTBW:
+    elif i.op == Operator.NOTBW:#TODO:
         opl = solve_val(i.e1)
         pass
-    elif i.op == Operator.ANDBW:
-        opl = solve_val(i.e1)
-        opr = solve_val(i.e2)
-        pass
-    elif i.op == Operator.ORBW:
+    elif i.op == Operator.ANDBW:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.XORBW:
+    elif i.op == Operator.ORBW:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.SHL:
+    elif i.op == Operator.XORBW:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.SHR:
+    elif i.op == Operator.SHL:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.EQ:
+    elif i.op == Operator.SHR:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.NEQ:
+    elif i.op == Operator.EQ:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.GR:
+    elif i.op == Operator.NEQ:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.GRE:
+    elif i.op == Operator.GR:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.LS:
+    elif i.op == Operator.GRE:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.LSE:
+    elif i.op == Operator.LS:#TODO:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         pass
-    elif i.op == Operator.AMP:
+    elif i.op == Operator.LSE:#TODO:
+        opl = solve_val(i.e1)
+        opr = solve_val(i.e2)
+        pass
+    elif i.op == Operator.AMP:#TODO:
         opr = solve_val(i.e1)
         pass
     elif (i.op == Operator.CINT):
@@ -181,18 +241,18 @@ def solve_oper(i):
     elif (i.op == Operator.CCHAR):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.CHAR, 0)
-        if opr.type == ValType.CHAR:        r.val = opr.value
-        elif opr.type == ValType.STRING:    r.val = ord(getFirst(opr.value)) % 256
-        elif opr.type == ValType.FLOAT:     r.val = trunc(opr.value) % 256
-        elif opr.type == ValType.INTEGER:   r.val = opr.value % 256
+        if opr.type == ValType.CHAR:        r.val = abs(opr.value)
+        elif opr.type == ValType.STRING:    r.val = abs(ord(getFirst(opr.value)) % 256)
+        elif opr.type == ValType.FLOAT:     r.val = abs(trunc(opr.value) % 256)
+        elif opr.type == ValType.INTEGER:   r.val = abs(opr.value % 256)
         elif opr.type == ValType.POINTER:   
             print(opr.type, ' cannot cast to char ', i.row)
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
-            if isinstance(tmp, str):        r.val = ord(getFirst(opr.value)) % 256
-            elif isinstance(tmp, float):    r.val = trunc(opr.value) % 256
-            elif isinstance(tmp, int):      r.val = float(tmp)
-            else:                           print(opr.type, ' cannot cast to float', i.row)
+            if isinstance(tmp, str):        r.val = abs(ord(getFirst(opr.value)) % 256)
+            elif isinstance(tmp, float):    r.val = abs(trunc(opr.value) % 256)
+            elif isinstance(tmp, int):      r.val = abs(float(tmp))
+            else:                           print(opr.type, ' cannot cast to char', i.row)
         elif opr.type == ValType.STRUCT:
             print(opr.type, ' cannot cast to char ', i.row)
         return r
