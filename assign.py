@@ -5,7 +5,161 @@ from st import Symbol, SymbolTable, getSymbol, updateSymbol
 from math import trunc
 from PyQt5 import QtWidgets
 
+def solve_val(i):
+    '''This function returns a ValExpression'''
+    if (i.type != ValType.REFVAR):
+        #if is not a variable reference returns the ValExpression itself
+        return i
+    else: 
+        #if is a variable reference, it looks for a coincidence on any symbol table
+        #then create a ValExpression with the raw value (and its type) and returns it
+        assign_instance = i.value
+        #gets an array access
+        arrAccess = None if (assign_instance.valExp == None) else createIdxCol(assign_instance.valExp)
+        #gets a symbol
+        symb_FromAssign = getSymbol(assign_instance.varName, assign_instance.varType)
+        if symb_FromAssign == None:
+            #There was not symbol returned
+            #return a 0 integer value
+            return ValExpression(0, ValType.INTEGER)
+        else:
+            #There was a symbol returned
+            #is a pointer? -> solved the pointer
+            if(symb_FromAssign.type == ValType.POINTER):
+                symb_FromAssign = solve_pointer(symb_FromAssign)
+                if (arrAccess != None):
+                    #It is necesary to travel through the given symbol value
+                    r = throughDict(symb_FromAssign.val, arrAccess)
+                    if r == None:
+                        return Symbol(None, ValType.INTEGER, 0)
+                    else:
+                        return ValExpression(r.val, r.type)
+                else:
+                    return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
+            #is an array? -> access through array
+            elif(symb_FromAssign.type == ValType.ARRAY or symb_FromAssign.type == ValType.STRUCT):
+                if (arrAccess != None):
+                    #It is necesary to travel through the given symbol value
+                    r = throughDict(symb_FromAssign.val, arrAccess)
+                    if r == None:
+                        return Symbol(None, ValType.INTEGER, 0)
+                    else:
+                        return ValExpression(r.val, r.type)
+                else:
+                    return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
+            else:
+                #perhaps is a integer, string, float or a char
+                return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
+            
+def createIdxCol(col = []):
+    '''create an array from the array returned by the parser in Assignment.valExp'''
+    rcol = []
+    for i in col:
+        if isinstance(i, str):
+            rcol.append(str(i))
+        elif isinstance(i, int):
+            rcol.append(int(i))
+        elif isinstance(i, Assignment):
+            #look for a symbol
+            syym = getSymbol(i.varName,i.varType)
+            if (syym != None):
+                #a symbol was returned
+                syym = solve_pointer(syym)
+                if isinstance(syym.val, int) or isinstance(syym.val, str) :
+                    rcol.append(syym.val)
+                else:
+                    print("Semantic error: unabled to retrieve value from ", str(i.varType), " ", str(i.varName))    
+                    return None
+            else:
+                #a symbol was not returned, so the var does not exist
+                print("Semantic error: the variable does not exists ", str(i.varType), " ", str(i.varName))
+                #return a None value
+                return None
+    return rcol
 
+def solve_pointer(sym):
+    '''takes a symbol and finds out if it's a pointer
+        if is, look for a reference in the symbol table
+        else, returns the symbol 'sym'
+        On erro returns an integer symbol with value 0'''
+    if sym.ValType == ValType.POINTER:
+        #Gets the assignment value
+        valSym = sym.val
+        #gets an array access
+        arrAccess = None if (valSym.valExp == None) else createIdxCol(valSym.valExp)
+        #Gets the Symbol referenced
+        valSym = getSymbol(valSym.varName, valSym.varType)
+        #Checks if valSymm is not None
+        if valSym != None:
+            #Checks if arrAccess is not None
+            if arrAccess == None:
+                #There is no need to travel through the given symbol value
+                #Checks again if valSym is a pointer
+                return solve_pointer(valSym)
+            else:
+                #It is necesary to travel through the given symbol value
+                r = throughDict(valSym.val,arrAccess)
+                if r == None:
+                    return Symbol(None,ValType.INTEGER,0)
+                else:
+                    return r
+        else:
+            print("Semantic error: unable reference ",str(valSym.varType), " ", str(valSym.varName))
+            return Symbol(None,ValType.INTEGER,0)
+    else:
+        return sym
+
+def throughDict(dic, idxcol = []):
+    '''travels through a given symbol
+        if theres is an error, returns None
+        else, returns a Symbol'''
+    tmp = dic
+    try:
+        for i in idxcol:
+            if isinstance(tmp, dict):
+                if not i in tmp:
+                    print("Semantic error: given index value doesn't exist")
+                else:
+                    tmp = tmp[i]
+            elif isinstance(tmp, str):
+                if len(tmp) < i:
+                    return Symbol(None,ValType.STRING,tmp[i])
+                else:
+                    print("Semantic error: index out of border")
+                    return None
+            else:
+                print("Semantic error: can't access through array to given Symbol")
+                return None
+        # symbol about to be returned
+        if isinstance(tmp, str):
+            return Symbol(None,ValType.STRING,tmp)
+        elif isinstance(tmp, float):
+            return Symbol(None,ValType.FLOAT,tmp)
+        elif isinstance(tmp, int):
+            return Symbol(None,ValType.INTEGER,tmp)
+        else:
+            print("Semantic error: unknown value found in array")
+    except:
+        print("Semantic error: can't access through array")
+    return None
+
+def solve_assign(i):
+    '''create a symbol'''
+    #retrieve name 
+    #TODO: FINISH THE CREATE AND ASSIGNMENT
+    varName = i[0] #assignment instance
+    #retrieve opr  
+    varOpr = i[1] #operationexpression instance
+    #solve opr, returns a Symbol
+    sym = Symbol(varName,None,None)
+    if isinstance(varOpr, ValExpression):
+        tmp = solve_val(varOpr) #returns ValExpression
+        sym.type = tmp.type
+        sym.val = tmp.value
+    elif isinstance(varOpr, OperationExpression):
+        tmp = solve_oper(varOpr) #returns Symbol
+        sym.type = tmp.type
+        sym.val = tmp.val
 
 def solve_oper(i):
     if i.op == Operator.PLUS:
@@ -304,8 +458,13 @@ def solve_oper(i):
             print("Semantic error: Can't compare these operands %d", i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.AMP:
-        # stores de whole object (name, typeval, array access)
-        return Symbol(None, ValType.POINTER, i.e1)
+        # checks if variable exist
+        r = getSymbol(i.e1.varName, i.e1.varType)
+        if (r != None):
+            return Symbol(None, ValType.POINTER, i.e1)
+        else:
+            print("Semantic error: can't use & on ",str(i.e1.varType), " ", str(i.e1.varName))
+            return Symbol(None, ValType.INTEGER, 0)
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.INTEGER, 0)
