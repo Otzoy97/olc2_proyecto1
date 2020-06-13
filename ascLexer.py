@@ -206,15 +206,18 @@ def p_idt(t):
 
 def p_vrn_t(t):
     '''vrn  : TVAR'''
-    t[0] = Assignment(t[1], RegisterType.TVAR, None)
+    idxVar = int(t[1][2:])
+    t[0] = Assignment(idxVar, RegisterType.TVAR, None)
 
 def p_vrn_a(t):
     '''vrn  : AVAR'''
-    t[0] = Assignment(t[1], RegisterType.AVAR, None)
+    idxVar = int(t[1][2:])
+    t[0] = Assignment(idxVar, RegisterType.AVAR, None)
 
 def p_vrn_v(t):
     '''vrn  : VVAR'''
-    t[0] = Assignment(t[1], RegisterType.VVAR, None)
+    idxVar = int(t[1][2:])
+    t[0] = Assignment(idxVar, RegisterType.VVAR, None)
 
 def p_vrn_r(t):
     '''vrn  : RVAR'''
@@ -222,7 +225,8 @@ def p_vrn_r(t):
 
 def p_vrn_s(t):
     '''vrn  : SVAR'''
-    t[0] = Assignment(t[1], RegisterType.SVAR, None)
+    idxVar = int(t[1][2:])
+    t[0] = Assignment(idxVar, RegisterType.SVAR, None)
 
 def p_vrn_sp(t):
     '''vrn  : SPVAR'''
@@ -239,15 +243,15 @@ def p_dml2(t):
 
 def p_dmn_int(t):
     '''dmn  : CORIZQ INT_VAL CORDER'''
-    t[0] = ValExpression(t[2], ValType.INTEGER)
+    t[0] = t[2] #returns integer value
 
 def p_dmn_string(t):
     '''dmn  : CORIZQ STRING_VAL CORDER'''
-    t[0] = ValExpression(t[2], ValType.STRING)
+    t[0] = t[2] #returns string value
 
 def p_dmn_idt(t):
     '''dmn  : CORIZQ vrn CORDER'''
-    t[0] = ValExpression(t[2], ValType.REFVAR)
+    t[0] = t[2] #returns assignment instance
 
 def p_bopr(t):
     '''opr : opn PLUS opn
@@ -361,6 +365,7 @@ def p_opns(t):
 
 def p_opnr(t):
     '''opn  : idt'''
+    #t[1] is an instance of Assignment
     t[0] = ValExpression(t[1],ValType.REFVAR)
 
 def p_error(t):
