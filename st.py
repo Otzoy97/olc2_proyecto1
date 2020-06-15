@@ -13,9 +13,6 @@ class SymbolTable():
     def __init__(self, syms = {}):
         self.syms = syms
 
-    #def add(self, sym):
-    #    self.syms[sym.id] = sym
-
 def getSymbol(idx,type_):
     '''given an index value and a register type
     looks for a value in the respective register'''
@@ -79,19 +76,19 @@ def updateSymbol(idx, type_, sym):
     elif type_ == RegisterType.SPVAR:
         if sym.type == ValType.INTEGER:
             sp_reg.value = sym.value    #updates the value
-            sp_reg.type = sym.type  #updates the type
+            #sp_reg.type = sym.type  #updates the type
         else:
             print("Semantic error: sp can't take ", str(sym.value), " as value, only ", sym(ValType.INTEGER))
     elif type_ == RegisterType.RVAR:
         if sym.type == ValType.INTEGER:
             ra_reg.value = sym.value
-            ra_reg.type = sym.type
+            #ra_reg.type = sym.type
         else:
             print("Semantic error: ra can't take ", str(sym.value), " as value, only", sym(ValType.INTEGER))
 
-t_reg = SymbolTable()
-a_reg = SymbolTable()
-v_reg = SymbolTable()
-s_reg = SymbolTable()
+t_reg = SymbolTable({})
+a_reg = SymbolTable({})
+v_reg = SymbolTable({})
+s_reg = SymbolTable({})
 ra_reg = Symbol(None,ValType.INTEGER, 0)
 sp_reg = Symbol(None,ValType.INTEGER, 0)
