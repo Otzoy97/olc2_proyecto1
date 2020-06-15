@@ -77,17 +77,17 @@ def updateSymbol(idx, type_, sym):
     elif type_ == RegisterType.SVAR:
         s_reg.syms[idx] = sym
     elif type_ == RegisterType.SPVAR:
-        if type_ == ValType.INTEGER:
-            sp_reg.value = sym.val    #updates the value
+        if sym.type == ValType.INTEGER:
+            sp_reg.value = sym.value    #updates the value
             sp_reg.type = sym.type  #updates the type
         else:
-            print("Semantic error: sp can't take ", str(sym.val), " as value, only ", sym(ValType.INTEGER))
+            print("Semantic error: sp can't take ", str(sym.value), " as value, only ", sym(ValType.INTEGER))
     elif type_ == RegisterType.RVAR:
-        if type_ == ValType.INTEGER:
-            ra_reg.value = sym.val
+        if sym.type == ValType.INTEGER:
+            ra_reg.value = sym.value
             ra_reg.type = sym.type
         else:
-            print("Semantic error: ra can't take ", str(sym.val), " as value", sym(ValType.INTEGER))
+            print("Semantic error: ra can't take ", str(sym.value), " as value, only", sym(ValType.INTEGER))
 
 t_reg = SymbolTable()
 a_reg = SymbolTable()
