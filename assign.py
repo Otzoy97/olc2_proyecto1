@@ -32,7 +32,7 @@ def solve_val(i):
                     #It is necesary to travel through the given symbol value
                     r = throughDict(symb_FromAssign.value, arrAccess)
                     if r == None:
-                        return Symbol(None, ValType.INTEGER, 0)
+                        return ValExpression(0, ValType.INTEGER)
                     else:
                         return ValExpression(r.value, r.type)
                 else:
@@ -43,7 +43,7 @@ def solve_val(i):
                     #It is necesary to travel through the given symbol value
                     r = throughDict(symb_FromAssign.value, arrAccess)
                     if r == None:
-                        return Symbol(None, ValType.INTEGER, 0)
+                        return ValExpression(0, ValType.INTEGER)
                     else:
                         return ValExpression(r.value, r.type)
                 else:
@@ -69,8 +69,8 @@ def createIdxCol(col = []):
                 #a symbol was returned
                 syym = solve_pointer(syym)
                 #The symbol returned must be a integer or a string
-                if isinstance(syym.val, int) or isinstance(syym.val, str) :
-                    rcol.append(syym.val)
+                if isinstance(syym.value, int) or isinstance(syym.value, str) :
+                    rcol.append(syym.value)
                 else:
                     print("Semantic error: unabled to retrieve value from ", str(i.varType), " ", str(i.varName))    
                     return None
@@ -86,7 +86,7 @@ def solve_pointer(sym):
         if is, look for a reference in the symbol table
         else, returns the symbol 'sym'
         On erro returns an integer symbol with value 0'''
-    if sym.ValType == ValType.POINTER:
+    if sym.type == ValType.POINTER:
         #Gets the assignment value
         valSym = sym.val
         #gets an array access
@@ -245,7 +245,7 @@ def solve_assign(i):
     if (check_var != None):
         #The variable already exists so, it has to be updated
         #Checks if it's an array value
-        if var_Temp.type == ValType.ARRAY:
+        if check_var.type == ValType.ARRAY:
             #The array variable cannot be overwritten but it can be altered
             if var_Access == None:
                 print("Semantic error: not indexed value to an array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
@@ -253,11 +253,11 @@ def solve_assign(i):
                 return
             else:
                 #if var_Access's value was not None
-                dict_Var = check_var.value
-                setValueInArray(dict_Var, var_Access, var_Temp.value)
-                return
+                setValueInArray(check_var.value, var_Access, var_Temp.value)
+                updateSymbol(var_Assign.varName, var_Assign.varType, check_var) 
         else:
             updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
+            return
     else:
         if var_Access != None:
             print("Semantic warning: can't access through array to a non array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
@@ -501,12 +501,12 @@ def solve_oper(i):
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         tmp = 1 if (opl.value == opr.value) else 0
-        return Symbol(None, ValType.INTEGER, temp)
+        return Symbol(None, ValType.INTEGER, tmp)
     elif i.op == Operator.NEQ:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         tmp = 1 if (opl.value != opr.value) else 0
-        return Symbol(None, ValType.INTEGER, temp)
+        return Symbol(None, ValType.INTEGER, tmp)
     elif i.op == Operator.GR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
