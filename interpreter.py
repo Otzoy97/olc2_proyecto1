@@ -2,6 +2,8 @@ from instruction import Print, Unset, Exit, If, GoTo, Assignment, Label
 from assign import solve_assign, solve_oper, solve_val
 from PyQt5 import QtWidgets
 from operation import ValExpression, OperationExpression
+from expression import ValType
+from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable
 
 class Interpreter():
     def __init__(self,astTree,QtOutpu):
@@ -9,6 +11,18 @@ class Interpreter():
         self.nextLabel = None
         self.labelDict = {}
         self.QtOutput = QtOutpu
+        global t_reg
+        global a_reg
+        global v_reg
+        global s_reg
+        global ra_reg
+        global sp_reg
+        t_reg = SymbolTable({})
+        a_reg = SymbolTable({})
+        v_reg = SymbolTable({})
+        s_reg = SymbolTable({})
+        ra_reg = Symbol(None,ValType.INTEGER, 0)
+        sp_reg = Symbol(None,ValType.INTEGER, 0)
 
     def checkLabel(self):
         '''This function filter all Label instances from
@@ -55,9 +69,8 @@ class Interpreter():
                     elif isinstance(objNode.oper, OperationExpression):
                         #call solve_opr, this function return an instance of Symbol
                         var_Temp = solve_oper(objNode.oper) #returns Symbol
-                    prevTxt = self.QtOutput.toPlainText()
-                    prevTxt += "\n>> "
-                    prevTxt += str(var_Temp.value)
+                    prevTxt = str(self.QtOutput.toPlainText())
+                    prevTxt += str(var_Temp.value).replace('\\n','\n')
                     self.QtOutput.setPlainText(prevTxt)
                     pass
                 elif isinstance(objNode, Unset):
