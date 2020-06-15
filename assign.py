@@ -30,29 +30,29 @@ def solve_val(i):
                 symb_FromAssign = solve_pointer(symb_FromAssign)
                 if (arrAccess != None):
                     #It is necesary to travel through the given symbol value
-                    r = throughDict(symb_FromAssign.val, arrAccess)
+                    r = throughDict(symb_FromAssign.value, arrAccess)
                     if r == None:
                         return Symbol(None, ValType.INTEGER, 0)
                     else:
-                        return ValExpression(r.val, r.type)
+                        return ValExpression(r.value, r.type)
                 else:
-                    return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
+                    return ValExpression(symb_FromAssign.value, symb_FromAssign.type)
             #is an array? -> access through array
             elif(symb_FromAssign.type == ValType.ARRAY or symb_FromAssign.type == ValType.STRUCT):
                 if (arrAccess != None):
                     #It is necesary to travel through the given symbol value
-                    r = throughDict(symb_FromAssign.val, arrAccess)
+                    r = throughDict(symb_FromAssign.value, arrAccess)
                     if r == None:
                         return Symbol(None, ValType.INTEGER, 0)
                     else:
-                        return ValExpression(r.val, r.type)
+                        return ValExpression(r.value, r.type)
                 else:
                     #if the <else> statement is executed perhabps createIdxCol ended with an error
                     #although is possible to copy an array, this practice is not recomended
-                    return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
+                    return ValExpression(symb_FromAssign.value, symb_FromAssign.type)
             else:
                 #perhaps is a integer, string, float or a char
-                return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
+                return ValExpression(symb_FromAssign.value, symb_FromAssign.type)
             
 def createIdxCol(col = []):
     '''create an array from the array returned by the parser in Assignment.valExp'''
@@ -255,12 +255,9 @@ def solve_assign(i):
                 #if var_Access's value was not None
                 dict_Var = check_var.value
                 setValueInArray(dict_Var, var_Access, var_Temp.value)
-        #Checks if it is a struct value
-        #if var_Temp.type == ValType.STRUCT:
-        #    if var_Access != None:
-        #        print("Semantic error: not indexed value to an array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
-        #    else:
-        #        pass
+                return
+        else:
+            updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
     else:
         if var_Access != None:
             print("Semantic warning: can't access through array to a non array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
