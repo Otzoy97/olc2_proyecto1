@@ -17,8 +17,8 @@ class Print(Instruction):
     '''
         This class saves a value that is then used to print a message
     '''
-    def __init__(self, msg):
-        self.msg = msg
+    def __init__(self, oper):
+        self.oper = oper
 
 class Unset(Instruction):
     '''
@@ -36,17 +36,17 @@ class If(Instruction):
     '''
         This class make decisions upon a boolean given value 
     '''
-    def __init__(self, bolVal, lblJmp, row):
-        self.bolVal = bolVal
-        self.lblJmp = lblJmp
+    def __init__(self, oper, name, row):
+        self.oper = oper
+        self.name = name
         self.row = row
 
 class GoTo(Instruction):
     '''
         To make a jump to a given label 
     '''
-    def __init__(self, lblJmp, row):
-        self.lblJmp = lblJmp
+    def __init__(self, name, row):
+        self.name = name
         self.row = row
 
 class Assignment(Instruction):
@@ -66,6 +66,6 @@ class Label(Instruction):
         Sets a label name that is then used to make a jump 
         inside the code
     '''
-    def __init__(self, lblNm, row):
-        self.lblNm = lblNm
+    def __init__(self, name, row):
+        self.name = name
         self.row = row
