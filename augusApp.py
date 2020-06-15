@@ -7,6 +7,7 @@ from ascLexer import parse as ascParse, parser as ascParser, lexer as ascLexer
 from ascAST import createAST
 import interpreter
 
+
 class Ui_augusApp(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         super().__init__(None)
@@ -87,7 +88,6 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.txtOutput.setFont(font)
         self.txtOutput.setUndoRedoEnabled(True)
         self.txtOutput.setObjectName("txtOutput")
-        self.txtOutput.setPlainText(">> ")
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         self.setCentralWidget(self.centralwidget)
         # -- BARRA DE MENÚ
@@ -358,19 +358,19 @@ class Ui_augusApp(QtWidgets.QMainWindow):
     def ascendentRun_action(self):
         ascLexer.lineno = 1
         txt = self.txtInput.toPlainText()
-        self.txtOutput.setPlainText(self.txtOutput.toPlainText + " starting execution...")
         #print('starting parsing...\n')
         # create the ast tree graph
         createAST(txt)
         # create the ast tree execution
         astRunner = ascParse(txt)
-        # create an instance of interpreter
-        run = interpreter.Interpreter(astRunner, self.txtOutput)
-        # checks the labels
-        if (run.checkLabel()):
-            #restart the symbols table
-            #execute de ast tree
-            run.run()
+        if(astRunner):
+            # create an instance of interpreter
+            run = interpreter.Interpreter(astRunner, self.txtOutput)
+            # checks the labels
+            if (run.checkLabel()):
+                #execute de ast tree
+                self.txtOutput.setPlainText(str(self.txtOutput.toPlainText()) + "\nstarting execution...")
+                run.run()
         ascParser.restart() 
 
     def descendentRun_action(self):
