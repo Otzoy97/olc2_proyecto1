@@ -6,7 +6,7 @@ class Symbol():
     def __init__(self, idn = None, typev = None, val = None):
         self.id = idn
         self.type = typev
-        self.val = val
+        self.value = val
 
 class SymbolTable():
     '''data struct to manage symbols'''
@@ -45,28 +45,46 @@ def getSymbol(idx,type_):
         return ra_reg
     return None
     
-def updateSymbol(sym):
-    #remove the dollar symbol and 
-    #the register type
-    #only leaves the number
-    #and that number is used as keyvalue
-    if sym.id.find('t') != -1:
-        t_reg.syms[sym.id] = sym #update the symbol
-    elif sym.id.find('a') != -1:
-        a_reg.syms[sym.id] = sym
-    elif sym.id.find('v') != -1:
-        v_reg.syms[sym.id] = sym
-    elif sym.id.find('s') != -1:
-        s_reg.syms[sym.id] = sym
-    elif sym.id.find('sp') != -1:
-        if sym.type == ValType.INTEGER:
-            sp_reg.val = sym.val    #updates the value
+def findSymbol(idx,type_):
+    '''look for a coincidence, returns de symbol if is there is one
+    else returns none'''
+    if type_ == RegisterType.TVAR:
+        if idx in t_reg.syms:
+            return t_reg.syms[idx]
+    elif type_ == RegisterType.AVAR:
+        if idx in a_reg.syms:
+            return a_reg.syms[idx]
+    elif type_ == RegisterType.VVAR:
+        if idx in v_reg.syms:
+            return v_reg.syms[idx]
+    elif type_ == RegisterType.SVAR:
+        if idx in s_reg.syms:
+            return s_reg.syms[idx]
+    elif type_ == RegisterType.SPVAR:
+        return sp_reg
+    elif type_ == RegisterType.RVAR:
+        return ra_reg
+    return None
+
+def updateSymbol(idx, type_, sym):
+    #create or update a symbol
+    if type_ == RegisterType.TVAR:
+        t_reg.syms[idx] = sym #update the symbol
+    elif type_ == RegisterType.AVAR:
+        a_reg.syms[idx] = sym
+    elif type_ == RegisterType.VVAR:
+        v_reg.syms[idx] = sym
+    elif type_ == RegisterType.SVAR:
+        s_reg.syms[idx] = sym
+    elif type_ == RegisterType.SPVAR:
+        if type_ == ValType.INTEGER:
+            sp_reg.value = sym.val    #updates the value
             sp_reg.type = sym.type  #updates the type
         else:
             print("Semantic error: sp can't take ", str(sym.val), " as value, only ", sym(ValType.INTEGER))
-    elif sym.id.find('ra') != -1:
-        if sym.type == ValType.INTEGER:
-            ra_reg.val = sym.val
+    elif type_ == RegisterType.RVAR:
+        if type_ == ValType.INTEGER:
+            ra_reg.value = sym.val
             ra_reg.type = sym.type
         else:
             print("Semantic error: ra can't take ", str(sym.val), " as value", sym(ValType.INTEGER))
