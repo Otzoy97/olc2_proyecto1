@@ -1,7 +1,7 @@
 from expression import ValType, Operator
-from instruction import ValExpression, RegisterType
-import operation
-from st import Symbol, SymbolTable, getSymbol, updateSymbol
+from instruction import ValExpression, RegisterType, Assignment
+from operation import OperationExpression
+from st import Symbol, SymbolTable, getSymbol, updateSymbol, findSymbol
 from math import trunc
 from PyQt5 import QtWidgets
 
@@ -21,10 +21,11 @@ def solve_val(i):
         if symb_FromAssign == None:
             #There was not symbol returned
             #return a 0 integer value
+            #THIS IS AN ERROR
             return ValExpression(0, ValType.INTEGER)
         else:
             #There was a symbol returned
-            #is a pointer? -> solved the pointer
+            #is a pointer? -> solve the pointer
             if(symb_FromAssign.type == ValType.POINTER):
                 symb_FromAssign = solve_pointer(symb_FromAssign)
                 if (arrAccess != None):
@@ -46,6 +47,8 @@ def solve_val(i):
                     else:
                         return ValExpression(r.val, r.type)
                 else:
+                    #if the <else> statement is executed perhabps createIdxCol ended with an error
+                    #although is possible to copy an array, this practice is not recomended
                     return ValExpression(symb_FromAssign.val, symb_FromAssign.type)
             else:
                 #perhaps is a integer, string, float or a char
@@ -65,6 +68,7 @@ def createIdxCol(col = []):
             if (syym != None):
                 #a symbol was returned
                 syym = solve_pointer(syym)
+                #The symbol returned must be a integer or a string
                 if isinstance(syym.val, int) or isinstance(syym.val, str) :
                     rcol.append(syym.val)
                 else:
@@ -100,10 +104,12 @@ def solve_pointer(sym):
                 #It is necesary to travel through the given symbol value
                 r = throughDict(valSym.val,arrAccess)
                 if r == None:
+                    #an error took place when 'throughDict' were executed
                     return Symbol(None,ValType.INTEGER,0)
                 else:
                     return r
         else:
+            #the symbol was not found so, an error pops up and returns a zero
             print("Semantic error: unable reference ",str(valSym.varType), " ", str(valSym.varName))
             return Symbol(None,ValType.INTEGER,0)
     else:
@@ -118,19 +124,24 @@ def throughDict(dic, idxcol = []):
         for i in idxcol:
             if isinstance(tmp, dict):
                 if not i in tmp:
-                    print("Semantic error: given index value doesn't exist")
+                    print("Semantic error: given index value doesn't exist ", str(i))
+                    return None
                 else:
                     tmp = tmp[i]
             elif isinstance(tmp, str):
+                #if the index is not integer
+                if not isinstance(i, int):
+                    print("Semantic error: illegal index for a string value ", str(i))
+                #if the index is an integer but is out of bonds
                 if len(tmp) < i:
                     return Symbol(None,ValType.STRING,tmp[i])
                 else:
-                    print("Semantic error: index out of border")
+                    print("Semantic error: index out of border, string ", str(i))
                     return None
             else:
                 print("Semantic error: can't access through array to given Symbol")
                 return None
-        # symbol about to be returned
+        # symbol is about to be returned
         if isinstance(tmp, str):
             return Symbol(None,ValType.STRING,tmp)
         elif isinstance(tmp, float):
@@ -138,28 +149,122 @@ def throughDict(dic, idxcol = []):
         elif isinstance(tmp, int):
             return Symbol(None,ValType.INTEGER,tmp)
         else:
+            #if the else statment is executed, perhaps there was a partial access
+            # and reached object/element in the arrays is not a "flat value"
             print("Semantic error: unknown value found in array")
     except:
         print("Semantic error: can't access through array")
     return None
 
+def setValueInArray(array, idxcol, value):
+    '''
+        This function tries to write the given <value> in the <array> at the
+        indicated position by <idxcol>
+    '''
+    if not isinstance(array, dict):
+        #if the array parameter is not a dictionary instance then an error will pop up
+        print("Semantic error: value in index %s cannot be listed" % str(idxcol[0]))
+        return
+    if len(idxcol) == 1:
+        #If only one value remains in idxcol then it is assumed that the 
+        #desired position as already been reached and the <value> can already
+        #be written there
+        temp = idxcol.pop(0)
+        if temp in array and isinstance(array[temp], dict):
+            #If the 'temp' position has already been taken and is not
+            # a 'flat value' (integer, string, float) then
+            #it is assumed that the <value> cannot be written there
+            print("Semantic error: index %s is already occupied" % str(temp))
+            return
+        array[temp] = value
+    else:
+        #gets the first value in idxcol
+        temp = idxcol.pop(0)
+        #if array is an instance of dict and the 'temp' index value 
+        #does not exist in that instance then creates a dictionary
+        #at that 'temp' position
+        if isinstance(array,dict) and not temp in array:
+            array[temp] = {}
+        #the next if statement is used if there is a string stored
+        # at 'temp' in 'array', the idxcol's length is equal or greater than 1, 
+        # and the idxcol value is an integer
+        if isinstance(array[temp], str) and len(idxcol) >= 1:
+            if isinstance(idxcol[0], int):
+                #this var will save a copy altered of the original string
+                auxStr = ""
+                #string stored in array[temp]
+                aStr = array[temp]
+                #length of the string in array[temp]
+                lenStr =len(aStr)
+                #this var will help to track the next loop
+                cont = lenStr if idxcol[0] + 1 <= lenStr else idxcol[0] + 1
+                for i in range(0, cont):
+                    #this loop will copy the existent string
+                    #and will alter it 
+                    if i == idxcol[0]:
+                        auxStr += str(value)
+                    elif i + 1 <= lenStr:
+                        auxStr += aStr[i]
+                    else:
+                        auxStr += " "
+                array[temp] = auxStr
+                if len(idxcol) > 1:
+                    # this warning will let it know if there was indices that was not used
+                    # and therefore those indices are not necessary
+                    print("Semantic warning: unreachable index %s" % str(idxcol[1]))
+                return
+            else:
+                # if the index is not an integer then, an error will pop up
+                # It cannot use a non-integer value to index a string 
+                print("Semantic error: illegal index, string should be indexed with an integer")
+                return
+        setValueInArray(array[temp], idxcol, value)
+
 def solve_assign(i):
-    '''create a symbol'''
-    #retrieve name 
-    #TODO: FINISH THE CREATE AND ASSIGNMENT
-    varName = i[0] #assignment instance
-    #retrieve opr  
-    varOpr = i[1] #operationexpression instance
+    '''receives a pair [Assignment, OperationExpression] to create a symbol'''
+    #retrieve name an assignment instance
+    var_Assign = i[0]
+    #get an array access for the assignment
+    var_Access = None if (var_Assign.valExp == None) else createIdxCol(var_Assign.valExp)
+    #solve_oper 
+    var_Op = i[1] #operationexpression instance
     #solve opr, returns a Symbol
-    sym = Symbol(varName,None,None)
-    if isinstance(varOpr, ValExpression):
-        tmp = solve_val(varOpr) #returns ValExpression
-        sym.type = tmp.type
-        sym.val = tmp.value
-    elif isinstance(varOpr, OperationExpression):
-        tmp = solve_oper(varOpr) #returns Symbol
-        sym.type = tmp.type
-        sym.val = tmp.val
+    var_Temp = None
+    if isinstance(var_Op, ValExpression):
+        #call solve_var, this function returns an instance of ValExpression
+        var_Temp = solve_val(var_Op)
+    elif isinstance(var_Op, OperationExpression):
+        #call solve_opr, this function return an instance of Symbol
+        var_Temp = solve_oper(var_Op) #returns Symbol
+    #check if the variable name, stored in var_Assign, already exists
+    #in some symbol table
+    check_var = findSymbol(var_Assign.varName, var_Assign.varType)
+    #create an instance of Symbol with the informatcion of varAssign
+    #and the information returned by the function solve_val or solve_oper
+    var_Temp = Symbol(var_Assign.varName, var_Temp.type, var_Temp.value)
+    if (check_var != None):
+        #The variable already exists so, it has to be updated
+        #Checks if it's an array value
+        if var_Temp.type == ValType.ARRAY:
+            #The array variable cannot be overwritten but it can be altered
+            if var_Access == None:
+                print("Semantic error: not indexed value to an array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
+                print("     ", str(var_Assign.varType),str(var_Assign.varName), " was not assigned" )
+                return
+            else:
+                #if var_Access's value was not None
+                dict_Var = check_var.value
+                setValueInArray(dict_Var, var_Access, var_Temp.value)
+        #Checks if it is a struct value
+        #if var_Temp.type == ValType.STRUCT:
+        #    if var_Access != None:
+        #        print("Semantic error: not indexed value to an array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
+        #    else:
+        #        pass
+    else:
+        if var_Access != None:
+            print("Semantic warning: can't access through array to a non array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
+        updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
 
 def solve_oper(i):
     if i.op == Operator.PLUS:
@@ -399,7 +504,7 @@ def solve_oper(i):
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         tmp = 1 if (opl.value == opr.value) else 0
-        return Symbol(None, ValType.INTEGER, temp)7
+        return Symbol(None, ValType.INTEGER, temp)
     elif i.op == Operator.NEQ:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
@@ -535,7 +640,7 @@ def solve_oper(i):
         return r
     elif i.op == Operator.ARRAY:
         # creates an array symbol
-        r = Symbol(None,ValType.ARRAY,None)
+        r = Symbol(None,ValType.ARRAY,{})
         return r
 
 def getFirst(arr):
@@ -554,6 +659,3 @@ def getFirst(arr):
         print("Semantic error: Can't access through unknown data structure (b)")
         return 0
     return 0
-
-
-
