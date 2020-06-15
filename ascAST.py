@@ -96,7 +96,7 @@ t_SVAR          = r'\$s\d+'
 t_SPVAR          = r'\$sp'
 
 def t_FLOAT_VAL(t):
-    r'(\+|-)?\d+\.\d+'
+    r'\d+\.\d+'
     try:
         t.value = float(t.value)
     except:
@@ -104,7 +104,7 @@ def t_FLOAT_VAL(t):
     return t
 
 def t_INT_VAL(t):
-    r'(\+|-)?\d+'
+    r'\d+'
     try:
         t.value = int(t.value)
     except:

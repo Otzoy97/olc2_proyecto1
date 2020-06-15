@@ -83,15 +83,15 @@ t_GR            = r'>'
 t_GRE           = r'>='
 t_LS            = r'<'
 t_LSE           = r'<='
-t_TVAR          = r'\$t\d+'
-t_AVAR          = r'\$a\d+'
-t_VVAR          = r'\$v\d+'
+t_TVAR          = r'\$t(\d+)'
+t_AVAR          = r'\$a(\d+)'
+t_VVAR          = r'\$v(\d+)'
 t_RVAR          = r'\$ra'
-t_SVAR          = r'\$s\d+'
+t_SVAR          = r'\$s(\d+)'
 t_SPVAR          = r'\$sp'
 
 def t_FLOAT_VAL(t):
-    r'(\+|-)?\d+\.\d+'
+    r'\d+\.\d+'
     try:
         t.value = float(t.value)
     except:
@@ -99,7 +99,7 @@ def t_FLOAT_VAL(t):
     return t
 
 def t_INT_VAL(t):
-    r'(\+|-)?\d+'
+    r'\d+'
     try:
         t.value = int(t.value)
     except:
@@ -221,7 +221,7 @@ def p_vrn_v(t):
 
 def p_vrn_r(t):
     '''vrn  : RVAR'''
-    t[0] = Assignment(t[1], RegisterType.RVAR, None)
+    t[0] = Assignment(0, RegisterType.RVAR, None)
 
 def p_vrn_s(t):
     '''vrn  : SVAR'''
@@ -230,7 +230,7 @@ def p_vrn_s(t):
 
 def p_vrn_sp(t):
     '''vrn  : SPVAR'''
-    t[0] = Assignment(t[1], RegisterType.SPVAR, None)
+    t[0] = Assignment(0, RegisterType.SPVAR, None)
 
 def p_dml1(t):
     '''dml  : dml dmn'''
