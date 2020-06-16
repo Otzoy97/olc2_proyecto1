@@ -254,7 +254,21 @@ def solve_assign(i):
             else:
                 #if var_Access's value was not None
                 setValueInArray(check_var.value, var_Access, var_Temp.value)
-                updateSymbol(var_Assign.varName, var_Assign.varType, check_var) 
+                updateSymbol(var_Assign.varName, var_Assign.varType, check_var)
+        elif check_var.type == ValType.STRING:
+            #The string value can be altered through array access
+            if var_Access != None:
+                #create a dictionary with one key '0' and the string as value
+                dcc = {0: check_var.value} 
+                #insert at the begging of the array the firt key of dcc
+                var_Access.insert(0,0)
+                #set the value
+                setValueInArray(dcc,var_Access,var_Temp.value)
+                #update the symbol
+                check_var.value = dcc[0]
+                updateSymbol(var_Assign.varName, var_Assign.varType, check_var)
+            else:
+                updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp)     
         else:
             updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
             return
@@ -570,17 +584,23 @@ def solve_oper(i):
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.INTEGER, 0)
-        if opr.type == ValType.CHAR:        r.val = int(opr.value)
-        elif opr.type == ValType.STRING:    r.val = ord(opr.value[0])
-        elif opr.type == ValType.FLOAT:     r.val = trunc(opr.value)
-        elif opr.type == ValType.INTEGER:   r.val = opr.value
+        if opr.type == ValType.CHAR:        r.value = int(opr.value)
+        elif opr.type == ValType.STRING:    
+            if (len(opr.value) > 0 ):
+                print("orale gato, ves qu yo tenga botas")
+                r.value = ord(opr.value[0])
+                print(r.value)
+            else:
+                r.value = 0
+        elif opr.type == ValType.FLOAT:     r.value = trunc(opr.value)
+        elif opr.type == ValType.INTEGER:   r.value = opr.value
         elif opr.type == ValType.POINTER:   
             print(opr.type, ' cannot cast to int ', i.row)
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
-            if isinstance(tmp, str):        r.val = ord(tmp[0])
-            elif isinstance(tmp, float):    r.val = trunc(tmp)
-            elif isinstance(tmp, int):      r.val = tmp
+            if isinstance(tmp, str):        r.value = ord(tmp[0])
+            elif isinstance(tmp, float):    r.value = trunc(tmp)
+            elif isinstance(tmp, int):      r.value = tmp
             else:                           print(opr.type, ' cannot cast to int', i.row)
         elif opr.type == ValType.STRUCT:
             print("Semantic error: ",opr.type, ' cannot cast to int ', i.row)
@@ -590,17 +610,22 @@ def solve_oper(i):
     elif (i.op == Operator.CFLOAT):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.FLOAT, 0)
-        if opr.type == ValType.CHAR:        r.val = float(opr.value)
-        elif opr.type == ValType.STRING:    r.val = float(ord(opr.value[0]))
-        elif opr.type == ValType.FLOAT:     r.val = opr.value
-        elif opr.type == ValType.INTEGER:   r.val = float(opr.value)
+        if opr.type == ValType.CHAR:        r.value = float(opr.value)
+        elif opr.type == ValType.STRING:
+            if (len(opr.value) > 0 ):
+                r.value = float(ord(opr.value[0]))
+                print(r.value)
+            else:
+                r.value = 0
+        elif opr.type == ValType.FLOAT:     r.value = opr.value
+        elif opr.type == ValType.INTEGER:   r.value = float(opr.value)
         elif opr.type == ValType.POINTER:   
             print(opr.type, ' cannot cast to float ', i.row)
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
-            if isinstance(tmp, str):        r.val = float(ord(tmp[0]))
-            elif isinstance(tmp, float):    r.val = tmp
-            elif isinstance(tmp, int):      r.val = float(tmp)
+            if isinstance(tmp, str):        r.value = float(ord(tmp[0]))
+            elif isinstance(tmp, float):    r.value = tmp
+            elif isinstance(tmp, int):      r.value = float(tmp)
             else:                           print(opr.type, ' cannot cast to float', i.row)
         elif opr.type == ValType.STRUCT:
             print("Semantic error: ",opr.type, ' cannot cast to float ', i.row)
@@ -610,17 +635,22 @@ def solve_oper(i):
     elif (i.op == Operator.CCHAR):
         opr = solve_val(i.e1)
         r = Symbol(None, ValType.CHAR, 0)
-        if opr.type == ValType.CHAR:        r.val = abs(opr.value)
-        elif opr.type == ValType.STRING:    r.val = abs(ord(opr.value[0]) % 256)
-        elif opr.type == ValType.FLOAT:     r.val = abs(trunc(opr.value) % 256)
-        elif opr.type == ValType.INTEGER:   r.val = abs(opr.value % 256)
+        if opr.type == ValType.CHAR:        r.value = abs(opr.value)
+        elif opr.type == ValType.STRING:
+            if (len(opr.value) > 0 ):
+                r.value = abs(ord(opr.value[0]) % 256)
+                print(r.value)
+            else:
+                r.value = 0
+        elif opr.type == ValType.FLOAT:     r.value = abs(trunc(opr.value) % 256)
+        elif opr.type == ValType.INTEGER:   r.value = abs(opr.value % 256)
         elif opr.type == ValType.POINTER:   
             print(opr.type, ' cannot cast to char ', i.row)
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
-            if isinstance(tmp, str):        r.val = abs(ord(opr.value[0]) % 256)
-            elif isinstance(tmp, float):    r.val = abs(trunc(opr.value) % 256)
-            elif isinstance(tmp, int):      r.val = abs(tmp)%256
+            if isinstance(tmp, str):        r.value = abs(ord(opr.value[0]) % 256)
+            elif isinstance(tmp, float):    r.value = abs(trunc(opr.value) % 256)
+            elif isinstance(tmp, int):      r.value = abs(tmp)%256
             else:                           print(opr.type, ' cannot cast to char', i.row)
         elif opr.type == ValType.STRUCT:
             print("Semantic error: ",opr.type, ' cannot cast to char ', i.row)
@@ -631,9 +661,10 @@ def solve_oper(i):
         # shows an input box and save a string
         # creates an string symbol
         r = Symbol(None, ValType.STRING, "")
-        txt, msg = QtWidgets.QInputDialog.getText(None, 'Read')
+        txt, msg = QtWidgets.QInputDialog.getText(None, 'Read', 'Enter here:')
         if msg:
-            r.val = txt
+            r.value = txt
+            print(r.value)
         return r
     elif i.op == Operator.ARRAY:
         # creates an array symbol
