@@ -112,7 +112,7 @@ def t_INT_VAL(t):
     return t
 
 def t_STRING_VAL(t):
-    r'\".*?\"'
+    r'\".*?\"|\'.*?\''
     t.value = t.value[1:-1]
     return t
 
