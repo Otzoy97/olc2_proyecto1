@@ -107,7 +107,7 @@ def t_INT_VAL(t):
     return t
 
 def t_STRING_VAL(t):
-    r'\".*?\"'
+    r'\".*?\"|\'.*?\''
     t.value = t.value[1:-1]
     return t
 
@@ -184,11 +184,11 @@ def p_empty(t):
 
 def p_ntv_unset(t):
     '''ntv  : UNSET PARIZQ idt PARDER'''
-    t[0] = Unset(t[3])
+    t[0] = Unset(t[3], t.lineno(1))
 
 def p_ntv_print(t):
     '''ntv  : PRINT PARIZQ opn PARDER'''
-    t[0] = Print(t[3])
+    t[0] = Print(t[3], t.lineno(1))
 
 def p_ntv_exit(t):
     '''ntv  : EXIT'''
@@ -332,7 +332,7 @@ def p_uopr(t):
     elif t[1] == '~':
         t[0] = OperationExpression(Operator.NOTBW, t[2], None,t.lineno(1))
     elif t[1] == '&':
-        t[0] = OperationExpression(Operator.AMP, t[2], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.AMP, ValExpression(t[2],ValType.REFVAR), None,t.lineno(1))
     elif t[1] == 'abs':
         t[0] = OperationExpression(Operator.ABS, t[3], None,t.lineno(1))
 
@@ -341,11 +341,11 @@ def p_copr(t):
             | PARIZQ FLOAT PARDER idt
             | PARIZQ CHAR PARDER idt'''
     if t[2] == 'int':
-        t[0] = OperationExpression(Operator.CINT, t[4], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CINT, ValExpression(t[4],ValType.REFVAR), None,t.lineno(1))
     elif t[2] == 'float':
-        t[0] = OperationExpression(Operator.CFLOAT, t[4], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CFLOAT, ValExpression(t[4],ValType.REFVAR), None,t.lineno(1))
     elif t[2] == 'char':
-        t[0] = OperationExpression(Operator.CCHAR, t[4], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CCHAR, ValExpression(t[4],ValType.REFVAR), None,t.lineno(1))
 
 def p_opn_opr(t):
     '''opr  : opn'''

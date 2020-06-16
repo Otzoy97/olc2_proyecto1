@@ -17,15 +17,17 @@ class Print(Instruction):
     '''
         This class saves a value that is then used to print a message
     '''
-    def __init__(self, oper):
+    def __init__(self, oper, row):
         self.oper = oper
+        self.row = row
 
 class Unset(Instruction):
     '''
         This class saves a variable name that must be deleted
     '''
-    def __init__(self, varn):
+    def __init__(self, varn, row):
         self.varn = varn
+        self.row = row
 
 class Exit(Instruction):
     '''
@@ -53,7 +55,7 @@ class Assignment(Instruction):
     '''
         To set a value to a given variable
     '''
-    def __init__(self, varName, varType, valExp = []):
+    def __init__(self, varName, varType, valExp = None):
         '''varName: name of the variable
            varType: type of the variable
            valExpe: saves the access for an array'''
