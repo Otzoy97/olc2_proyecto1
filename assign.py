@@ -38,7 +38,7 @@ def solve_val(i):
                 else:
                     return ValExpression(symb_FromAssign.value, symb_FromAssign.type)
             #is an array? -> access through array
-            elif(symb_FromAssign.type == ValType.ARRAY or symb_FromAssign.type == ValType.STRUCT):
+            elif(symb_FromAssign.type == ValType.ARRAY or symb_FromAssign.type == ValType.STRUCT or symb_FromAssign.type == ValType.STRING):
                 if (arrAccess != None):
                     #It is necesary to travel through the given symbol value
                     r = throughDict(symb_FromAssign.value, arrAccess)
@@ -47,7 +47,8 @@ def solve_val(i):
                     else:
                         return ValExpression(r.value, r.type)
                 else:
-                    #if the <else> statement is executed perhabps createIdxCol ended with an error
+                    #if the <else> statement is executed perhabps createIdxCol poped an error
+                    # or there is a string, or
                     #although is possible to copy an array, this practice is not recomended
                     return ValExpression(symb_FromAssign.value, symb_FromAssign.type)
             else:
@@ -587,7 +588,6 @@ def solve_oper(i):
         if opr.type == ValType.CHAR:        r.value = int(opr.value)
         elif opr.type == ValType.STRING:    
             if (len(opr.value) > 0 ):
-                print("orale gato, ves qu yo tenga botas")
                 r.value = ord(opr.value[0])
                 print(r.value)
             else:
