@@ -3,9 +3,10 @@ from expression import Operator, ValType, Expression
 class ValExpression(Expression):                                                                                  
     '''
     '''
-    def __init__(self, value, type):
+    def __init__(self, value, type, row = -1):
         self.value = value
         self.type = type
+        self.row = row
 
 class OperationExpression(Expression):
     '''
