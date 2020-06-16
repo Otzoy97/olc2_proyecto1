@@ -18,22 +18,22 @@ def getSymbol(idx,type_):
     looks for a value in the respective register'''
     if type_ == RegisterType.TVAR:
         if not idx in t_reg.syms:
-            print("Semantic error: t%d does not exists", idx)
+            print("Semantic error: t%d does not exists"% idx)
         else:
             return t_reg.syms[idx]
     elif type_ == RegisterType.AVAR:
         if not idx in a_reg.syms:
-            print("Semantic error: a%d does not exists", idx)
+            print("Semantic error: a%d does not exists"% idx)
         else:
             return a_reg.syms[idx]
     elif type_ == RegisterType.VVAR:
         if not idx in v_reg.syms:
-            print("Semantic error: v%d does not exists", idx)
+            print("Semantic error: v%d does not exists"% idx)
         else:
             return v_reg.syms[idx]
     elif type_ == RegisterType.SVAR:
         if not idx in s_reg.syms:
-            print("Semantic error: s%d does not exists", idx)
+            print("Semantic error: s%d does not exists"% idx)
         else:
             return s_reg.syms[idx]
     elif type_ == RegisterType.SPVAR:
