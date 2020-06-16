@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets
 from operation import ValExpression, OperationExpression
 from expression import ValType
 from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable
+from datetime import datetime
 
 class Interpreter():
     def __init__(self,astTree,QtOutpu):
@@ -17,12 +18,14 @@ class Interpreter():
         global s_reg
         global ra_reg
         global sp_reg
-        t_reg = SymbolTable({})
-        a_reg = SymbolTable({})
-        v_reg = SymbolTable({})
-        s_reg = SymbolTable({})
-        ra_reg = Symbol(None,ValType.INTEGER, 0)
-        sp_reg = Symbol(None,ValType.INTEGER, 0)
+        t_reg.syms.clear()
+        a_reg.syms.clear()
+        v_reg.syms.clear()
+        s_reg.syms.clear()
+        ra_reg.value = 0
+        ra_reg.type = ValType.INTEGER
+        sp_reg.value = 0
+        sp_reg.type = ValType.INTEGER
 
     def checkLabel(self):
         '''This function filter all Label instances from
@@ -52,14 +55,17 @@ class Interpreter():
             return
         # this variable will work as a counter and 
         # will specify what position of the syntax tree is running
+        now = datetime.now()
+        cteTime = now.strftime("%H:%M:%S")
+        self.QtOutput.appendPlainText("starting execution..." + cteTime+"\n")
         cte_i = self.labelDict['main'] + 1
         while(cte_i < len(self.astTree)):
             lenNode = len(self.astTree[cte_i])
             if lenNode == 1:
                 objNode = self.astTree[cte_i][0]
                 if isinstance(objNode, Exit):
-                    print("Execution ended")
-                    return
+                    #print("Execution ended")
+                    break
                 elif isinstance(objNode, Print):
                     var_Temp = None
                     #solve oper and print the result
@@ -69,10 +75,13 @@ class Interpreter():
                     elif isinstance(objNode.oper, OperationExpression):
                         #call solve_opr, this function return an instance of Symbol
                         var_Temp = solve_oper(objNode.oper) #returns Symbol
-                    prevTxt = str(self.QtOutput.toPlainText())
-                    prevTxt += str(var_Temp.value).replace('\\n','\n')
-                    self.QtOutput.setPlainText(prevTxt)
-                    pass
+                    if (var_Temp.type != ValType.FLOAT and var_Temp.type != ValType.STRING and 
+                    var_Temp.type != ValType.INTEGER and var_Temp.type != ValType.CHAR):
+                        print("Semantic errror: cannot print an array", objNode.row)
+                    else:
+                        prevTxt = str(self.QtOutput.toPlainText())
+                        prevTxt += str(var_Temp.value).replace('\\n','\n')
+                        self.QtOutput.setPlainText(prevTxt)
                 elif isinstance(objNode, Unset):
                     #will delete a symbol or a position in array
                     pass
@@ -104,3 +113,6 @@ class Interpreter():
                 solve_assign(self.astTree[cte_i])
             #increment the counter
             cte_i += 1
+        now = datetime.now()
+        cteTime = now.strftime("%H:%M:%S")
+        self.QtOutput.appendPlainText("execution ended " + cteTime +"\n")
