@@ -55,13 +55,14 @@ class Assignment(Instruction):
     '''
         To set a value to a given variable
     '''
-    def __init__(self, varName, varType, valExp = None):
+    def __init__(self, varName, varType, valExp, row):
         '''varName: name of the variable
            varType: type of the variable
            valExpe: saves the access for an array'''
         self.varName = varName
         self.varType = varType
         self.valExp = valExp
+        self.row = row
 
 class Label(Instruction):
     '''

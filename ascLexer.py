@@ -117,7 +117,7 @@ def t_LBS(t):
     return t
 
 def t_COMMENT(t):
-    r'\#.*\n'
+    r'\#.*\n*?'
     t.lexer.lineno += 1
 
 t_ignore = " \t"
@@ -127,8 +127,6 @@ def t_newline(t):
     t.lexer.lineno += len("\n")
 
 def t_error(t):
-    #TODO: find a way to print directly to console
-    print ("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
 import ply.lex as lex
@@ -207,30 +205,30 @@ def p_idt(t):
 def p_vrn_t(t):
     '''vrn  : TVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.TVAR, None)
+    t[0] = Assignment(idxVar, RegisterType.TVAR, None, t.lineno(1))
 
 def p_vrn_a(t):
     '''vrn  : AVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.AVAR, None)
+    t[0] = Assignment(idxVar, RegisterType.AVAR, None, t.lineno(1))
 
 def p_vrn_v(t):
     '''vrn  : VVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.VVAR, None)
+    t[0] = Assignment(idxVar, RegisterType.VVAR, None, t.lineno(1))
 
 def p_vrn_r(t):
     '''vrn  : RVAR'''
-    t[0] = Assignment(0, RegisterType.RVAR, None)
+    t[0] = Assignment(0, RegisterType.RVAR, None, t.lineno(1))
 
 def p_vrn_s(t):
     '''vrn  : SVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.SVAR, None)
+    t[0] = Assignment(idxVar, RegisterType.SVAR, None, t.lineno(1))
 
 def p_vrn_sp(t):
     '''vrn  : SPVAR'''
-    t[0] = Assignment(0, RegisterType.SPVAR, None)
+    t[0] = Assignment(0, RegisterType.SPVAR, None, t.lineno(1))
 
 def p_dml1(t):
     '''dml  : dml dmn'''
@@ -316,7 +314,6 @@ def p_nopr(t):
     if t[1] == 'read':
         t[0] = OperationExpression(Operator.READ, None, None,t.lineno(1))
     elif t[1] == 'array':
-        # TODO: indicate de value to store something like a dictionary
         t[0] = OperationExpression(Operator.ARRAY, None, None,t.lineno(1))
             
 def p_uopr(t):
@@ -341,11 +338,11 @@ def p_copr(t):
             | PARIZQ FLOAT PARDER idt
             | PARIZQ CHAR PARDER idt'''
     if t[2] == 'int':
-        t[0] = OperationExpression(Operator.CINT, ValExpression(t[4],ValType.REFVAR), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CINT, ValExpression(t[4],ValType.REFVAR,t.lineno(1)), None,t.lineno(1))
     elif t[2] == 'float':
-        t[0] = OperationExpression(Operator.CFLOAT, ValExpression(t[4],ValType.REFVAR), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CFLOAT, ValExpression(t[4],ValType.REFVAR,t.lineno(1)), None,t.lineno(1))
     elif t[2] == 'char':
-        t[0] = OperationExpression(Operator.CCHAR, ValExpression(t[4],ValType.REFVAR), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CCHAR, ValExpression(t[4],ValType.REFVAR,t.lineno(1)), None,t.lineno(1))
 
 def p_opn_opr(t):
     '''opr  : opn'''
@@ -353,31 +350,24 @@ def p_opn_opr(t):
 
 def p_opnf(t):
     '''opn  : FLOAT_VAL'''
-    t[0] = ValExpression(t[1],ValType.FLOAT)
+    t[0] = ValExpression(t[1],ValType.FLOAT,t.lineno(1))
 
 def p_opni(t):
     '''opn  : INT_VAL'''
-    t[0] = ValExpression(t[1],ValType.INTEGER)
+    t[0] = ValExpression(t[1],ValType.INTEGER,t.lineno(1))
 
 def p_opns(t):
     '''opn  : STRING_VAL'''
-    t[0] = ValExpression(t[1],ValType.STRING)
+    t[0] = ValExpression(t[1],ValType.STRING,t.lineno(1))
 
 def p_opnr(t):
     '''opn  : idt'''
     #t[1] is an instance of Assignment
-    t[0] = ValExpression(t[1],ValType.REFVAR)
+    t[0] = ValExpression(t[1],ValType.REFVAR,t.lineno(1))
 
 def p_error(t):
-    #TODO: find a way to print directly to console
-    print(t)
-    #print("Syntax error at '%s' ('%d')" % t.value)
-    try:
-        print("Syntax error at '%s'" % t.value)
-    except:
-        pass
-    #txtPrev += str(t) + "\nSyntax error at '%s' ('%d', '%d')" % (t.value, t.lineno, t)
-    #augusApp.txtOutput.setPlainText()
+    if t:
+        parser.errok()
 
 import ply.yacc as yacc
 parser = yacc.yacc()

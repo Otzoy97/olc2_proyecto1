@@ -1,3 +1,4 @@
+from err import addErr, ErrType
 class AscNode:
     def __init__(self, val):
         self.val = val
@@ -122,7 +123,7 @@ def t_LBS(t):
     return t
 
 def t_COMMENT(t):
-    r'\#.*\n'
+    r'\#.*\n*?'
     t.lexer.lineno += 1
 
 t_ignore = " \t"
@@ -132,6 +133,7 @@ def t_newline(t):
     t.lexer.lineno += t.value.count("\n")
 
 def t_error(t):
+    addErr(ErrType.LEXIC, 'Illegal character: ' + str(t.value[0]), t.lexer.lineno)
     #print ("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
@@ -305,15 +307,18 @@ def p_opnr(t):
     t[0] = t[1]
 
 def p_error(t):
-    #print(t)
-    pass
+    if t:
+        addErr(ErrType.SINTACTIC, "Can't reduce '"+ str(t.value) +"'", t.lineno)
+        parser.errok()
+    else:
+        addErr(ErrType.SINTACTIC, "Unexpected EOF", "")
 
 import ply.yacc as y
 from graphviz import Digraph
 from datetime import datetime
 
 parser = y.yacc()
-dot = Digraph(comment='ascAST')
+dot = Digraph(name='ascAST')
 
 def createAST(input):
     '''
@@ -333,7 +338,7 @@ def createAST(input):
     now = datetime.now()
     fstr = now.strftime("%d%m%y-%H%M%S")
     #render the graph
-    dot.render('ascAST'+fstr,'report',False,True,'png')
+    dot.render('ascAST'+fstr,'report',False,True,'svg')
     #clear the stack parser
     parser.restart()
     #clear the dot body

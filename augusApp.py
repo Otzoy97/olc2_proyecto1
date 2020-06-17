@@ -6,7 +6,7 @@ from QCodeEditor import QCodeEditor
 from ascLexer import parse as ascParse, parser as ascParser, lexer as ascLexer
 from ascAST import createAST
 import interpreter
-
+from err import createReport, lexicArgs, semanticArgs, sintacticArgs, linesCount_, createReport
 
 class Ui_augusApp(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
@@ -256,17 +256,19 @@ class Ui_augusApp(QtWidgets.QMainWindow):
     
     def newFile_action(self):
         """Checks reference of actual file being edited. If it's saved then just clear the input text, if it isn't saveFile is called"""
-        if self.fileSaved:
+        if not self.fileSaved:
             msg = QtWidgets.QMessageBox.question(
                 self,'New',
                 'Do you want to save changes before?',
                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel)
             if msg == QtWidgets.QMessageBox.Yes:
                 self.saveFile_action()
-        self.txtInput.setPlainText("")
-        self.setWindowTitle('Augus 0.1 - untitled')
-        self.lblStatus.setText("Not saved")
-        self.fileRef = ""
+            elif msg == QtWidgets.QMessageBox.Cancel:
+                return
+            self.txtInput.setPlainText("")
+            self.setWindowTitle('Augus 0.1 - untitled')
+            self.lblStatus.setText("Not saved")
+            self.fileRef = ""
 
     def saveFile_action(self):
         """Checks the existence of a reference to a file. If there is one, then the file is uploaded, else saveFileAs is called"""
@@ -283,7 +285,8 @@ class Ui_augusApp(QtWidgets.QMainWindow):
     
     def saveFileAs_action(self):
         """Shows a file dialog to save a file at a directory. Retrieve file name and puts it as a reference to a file"""
-        fileName = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As', str(Path.home()), "Augus files (*.aug)")
+        #fileName = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As', str(Path.home()), "Augus files (*.aug)")
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, 'Save As', str(Path.home()))
         if fileName[0]:
             with codecs.open(fileName[0],'w', encoding='utf8') as f:
                 f.write(self.txtInput.toPlainText())
@@ -295,15 +298,27 @@ class Ui_augusApp(QtWidgets.QMainWindow):
     def openFile_action(self):
         """Shows a file dialog to find a file. Retrieve file name and puts it as a reference to a file"""
         # call new file to verify if actual file is saved
-        self.newFile_action()
-        fileName = QtWidgets.QFileDialog.getOpenFileName(self, 'Open', str(Path.home()), "Augus files (*.aug)")
+        if not self.fileSaved:
+            msg = QtWidgets.QMessageBox.question(
+                self,'New',
+                'Do you want to save changes before?',
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel)
+            if msg == QtWidgets.QMessageBox.Yes:
+                self.saveFile_action()
+            elif msg == QtWidgets.QMessageBox.Cancel:
+                return
+        #fileName = QtWidgets.QFileDialog.getOpenFileName(self, 'Open', str(Path.home()), "Augus files (*.aug)")
+        fileName = QtWidgets.QFileDialog.getOpenFileName(self, 'Open', str(Path.home()))
         if fileName[0]:
-            with codecs.open(fileName[0],'r', encoding='utf8') as f:
-                self.txtInput.setPlainText(f.read())
-            self.fileSaved = True
-            self.lblStatus.setText('Saved')
-            self.fileRef = fileName[0]
-            self.setWindowTitle("Augus 0.1 - " + self.fileRef)
+            try:
+                with codecs.open(fileName[0],'r', encoding='utf8') as f:
+                    self.txtInput.setPlainText(f.read())
+                self.fileSaved = True
+                self.lblStatus.setText('Saved')
+                self.fileRef = fileName[0]
+                self.setWindowTitle("Augus 0.1 - " + self.fileRef)
+            except:
+                QtWidgets.QMessageBox.critical(self,"Error", "Couldn't open file")
 
     def goTo_action(self):
         """Shows a input dialog. The user must enter a number or a coordinate, then the cursor is settled on that row number or coordinate"""
@@ -358,9 +373,12 @@ class Ui_augusApp(QtWidgets.QMainWindow):
     def ascendentRun_action(self):
         ascLexer.lineno = 1
         txt = self.txtInput.toPlainText()
-        #print('starting parsing...\n')
-        # create the ast tree graph
+        lexicArgs.clear()
+        sintacticArgs.clear()
+        semanticArgs.clear()
+        # create the ast tree graph        
         createAST(txt)
+        createReport(self.txtInput.document().blockCount())
         # create the ast tree execution
         astRunner = ascParse(txt)
         if(astRunner):
@@ -369,7 +387,6 @@ class Ui_augusApp(QtWidgets.QMainWindow):
             # checks the labels
             if (run.checkLabel()):
                 #execute de ast tree
-                self.txtOutput.setPlainText(str(self.txtOutput.toPlainText()) + "\nstarting execution...")
                 run.run()
         ascParser.restart() 
 
