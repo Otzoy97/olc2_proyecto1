@@ -3,7 +3,7 @@ from assign import solve_assign, solve_oper, solve_val
 from PyQt5 import QtWidgets
 from operation import ValExpression, OperationExpression
 from expression import ValType
-from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable, getSymbol, deleteSymbol
+from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable, getSymbol, deleteSymbol, createReport
 from datetime import datetime
 from err import addErr, ErrType
 
@@ -121,4 +121,5 @@ class Interpreter():
             cte_i += 1
         now = datetime.now()
         cteTime = now.strftime("%H:%M:%S")
+        createReport()
         self.QtOutput.appendPlainText("execution ended " + cteTime +"\n")

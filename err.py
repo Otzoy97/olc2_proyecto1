@@ -40,7 +40,7 @@ def addContentToDot(dotObj,content,reportName):
     '''add nodes to the graphviz object dotObj'''
     #string to store de html value
     lblStr = '<<table align="center" cellspacing="0" cellborder="1" border="0">'
-    lblStr += "<tr><td colspan='3'>" + reportName +"</td> </tr>"
+    lblStr += "<tr><td colspan='2'>" + reportName +"</td> </tr>"
     lblStr += "<tr><td>Description</td> <td>Line</td></tr>"
     for i in content:
         if isinstance(i.row, int):
@@ -48,7 +48,7 @@ def addContentToDot(dotObj,content,reportName):
         lblStr += "<tr><td>"+i.description+"</td> <td>"+i.row+"</td></tr>"
     now = datetime.now()
     fstr = now.strftime("%d%m%y-%H%M%S")
-    lblStr += "<tr><td colspan='3'>"+fstr+"</td> </tr>"
+    lblStr += "<tr><td colspan='2'>"+fstr+"</td> </tr>"
     lblStr += "</table>>"
     dotObj.node("d1",lblStr)
     dotObj.render(reportName + fstr,'report',False,True,'pdf')

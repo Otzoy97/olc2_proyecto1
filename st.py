@@ -1,6 +1,8 @@
 from expression import ValType
 from instruction import RegisterType
 from err import addErr, ErrType
+from datetime import datetime
+from graphviz import Digraph
 
 class Symbol():
     '''class that represents an abstracton of a symbol (a variable)'''
@@ -99,6 +101,48 @@ def deleteSymbol(idx, type_):
         sp_reg.value = 0
     elif type_ == RegisterType.RVAR:
         ra_reg.value = 0
+
+def createReport():
+    lblDot = '<<table align="center" cellspacing="0" cellborder="1" border="0">\n'
+    lblDot += "<tr><td colspan='5'> Symbols Table report </td> </tr>\n"
+    lblDot += "<tr>\n<td>Id</td>\n<td>Type</td>\n<td>Value</td>\n<td>Dimension</td>\n<td>Ref.</td>\n</tr>\n"
+    for i in t_reg.syms.values():
+        dimen = ""
+        if isinstance(i.value,dict):
+            dimen = str(len(i.value))
+        lblDot += "<tr>\n<td>t"+ str(i.id)+"</td>\n<td>" + str(i.type) +"</td>\n<td>"+ str(i.value) +"</td>\n<td>"+dimen +"</td>\n<td></td>\n</tr>\n"
+    for i in a_reg.syms.values():
+        dimen = ""
+        if isinstance(i.value,dict):
+            dimen = str(len(i.value))
+        lblDot += "<tr>\n<td>a"+ str(i.id)+"</td>\n<td>" + str(i.type) +"</td>\n<td>"+ str(i.value) +"</td>\n<td>"+dimen +"</td>\n<td></td>\n</tr>\n"
+    for i in v_reg.syms.values():
+        dimen = ""
+        if isinstance(i.value,dict):
+            dimen = str(len(i.value))
+        lblDot += "<tr>\n<td>v"+str(i.id)+"</td>\n<td>" + str(i.type) +"</td>\n<td>"+ str(i.value) +"</td>\n<td>"+dimen +"</td>\n<td></td>\n</tr>\n"
+    for i in s_reg.syms.values():
+        dimen = ""
+        if isinstance(i.value,dict):
+            dimen = str(len(i.value))
+        lblDot += "<tr>\n<td>s"+ str(i.id)+"</td>\n<td>" + str(i.type) +"</td>\n<td>"+ str(i.value) +"</td>\n<td>"+dimen +"</td>\n<td></td>\n</tr>\n"
+    dimen = ""
+    if isinstance(ra_reg.value,dict):
+        dimen = str(len(ra_reg.value))
+    lblDot += "<tr>\n<td>ra</td>\n<td>" + str(ra_reg.type) +"</td>\n<td>"+ str(ra_reg.value) +"</td>\n<td>"+dimen +"</td>\n<td></td>\n</tr>\n"
+    dimen = ""
+    if isinstance(sp_reg.value,dict):
+        dimen = str(len(sp_reg.value))
+    lblDot += "<tr>\n<td>sp</td>\n<td>" + str(sp_reg.type) +"</td>\n<td>"+ str(sp_reg.value) +"</td>\n<td>"+dimen +"</td>\n<td></td>\n</tr>\n"
+    now = datetime.now()
+    fstr = now.strftime("%d%m%y-%H%M%S")
+    lblDot += "<tr><td colspan='5'>"+fstr+"</td> </tr></table>>"
+    g = Digraph(name="Symbols_table",node_attr={'shape':'plaintext', 'color':'gray'})
+    g.node("d1", lblDot)
+    try:
+        g.render("Symbols table" + fstr,'report',False,True,'pdf')
+    except Exception as e:
+        print(e)
 
 t_reg = SymbolTable({})
 a_reg = SymbolTable({})
