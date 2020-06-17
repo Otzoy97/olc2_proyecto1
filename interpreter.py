@@ -3,8 +3,9 @@ from assign import solve_assign, solve_oper, solve_val
 from PyQt5 import QtWidgets
 from operation import ValExpression, OperationExpression
 from expression import ValType
-from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable
+from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable, getSymbol, deleteSymbol
 from datetime import datetime
+from err import addErr, ErrType
 
 class Interpreter():
     def __init__(self,astTree,QtOutpu):
@@ -42,7 +43,7 @@ class Interpreter():
                 self.labelDict[i[1][0].name] = i[0]
             else:
                 #if the Label's name already exists, an error pops up
-                print("Semantic error: The label '", i[1][0].name, "' already exists ", str(i[1][0].row))
+                addErr(ErrType.SEMANTIC, "Error: The label '" + str(i[1][0].name) + "' already exists", i[1][0].row)
                 return False
         return True
     
@@ -51,7 +52,7 @@ class Interpreter():
             This function checks if the first label name is main and start the execution
         '''
         if not 'main' in self.labelDict or self.labelDict['main'] != 0:
-            print("Semantic error: 'main' label must be declared and must be at the start of the code")
+            addErr(ErrType.SEMANTIC, "Error: 'main' label must be at the begging of the code", "")
             return
         # this variable will work as a counter and 
         # will specify what position of the syntax tree is running
@@ -77,19 +78,24 @@ class Interpreter():
                         var_Temp = solve_oper(objNode.oper) #returns Symbol
                     if (var_Temp.type != ValType.FLOAT and var_Temp.type != ValType.STRING and 
                     var_Temp.type != ValType.INTEGER and var_Temp.type != ValType.CHAR):
-                        print("Semantic errror: cannot print an array", objNode.row)
+                        addErr(ErrType.SEMANTIC, "Error: cannot print an array", objNode.row)
                     else:
                         prevTxt = str(self.QtOutput.toPlainText())
                         prevTxt += str(var_Temp.value).replace('\\n','\n')
                         self.QtOutput.setPlainText(prevTxt)
                 elif isinstance(objNode, Unset):
-                    #will delete a symbol or a position in array
-                    pass
+                    #will delete a symbol
+                    assig = objNode.varn
+                    s = getSymbol(assig.varName, assig.varType)
+                    if s:
+                        deleteSymbol(assig.varName,assig.varType)
+                    else:
+                        addErr(ErrType.SEMANTIC, "Error: can't unset variable", objNode.row)                    
                 elif isinstance(objNode, GoTo):
                     #load the value for the key given by label's name
                     if not objNode.name  in self.labelDict:
-                        print("Semantic error: ",objNode.name ," does not exist")
-                        return
+                        addErr(ErrType.SEMANTIC, "Error: Label '"+objNode.name +"' does not exist", objNode.row)
+                        break
                     cte_i = self.labelDict[objNode.name]
                 elif isinstance(objNode, If):
                     #solve oper and if the result is not 0 then it will make a jump
@@ -103,11 +109,11 @@ class Interpreter():
                         var_Temp = solve_oper(objNode.oper) #returns Symbol
                     #var_Temp.value has to be an integer type
                     if not isinstance(var_Temp.value, int):
-                        print("Semantic error: if statement can't make decisions upon the given operation ", str(objNode.row))
+                        addErr(ErrType.SEMANTIC, "Error: If statment can't make decision upon the given operation", objNode.row)
                     elif (var_Temp.value != 0):
                         if not objNode.name in self.labelDict:
-                            print("Semantic error: ",objNode.name ," does not exist")
-                            return
+                            addErr(ErrType.SEMANTIC, "Error: Label '"+objNode.name +"' does not exist", objNode.row)
+                            break
                         cte_i = self.labelDict[objNode.name]
             elif lenNode == 2:
                 solve_assign(self.astTree[cte_i])

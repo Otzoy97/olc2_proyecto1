@@ -1,5 +1,6 @@
 from expression import ValType
 from instruction import RegisterType
+from err import addErr, ErrType
 
 class Symbol():
     '''class that represents an abstracton of a symbol (a variable)'''
@@ -18,22 +19,22 @@ def getSymbol(idx,type_):
     looks for a value in the respective register'''
     if type_ == RegisterType.TVAR:
         if not idx in t_reg.syms:
-            print("Semantic error: t%d does not exists"% idx)
+            addErr(ErrType.SEMANTIC, "Error: t" + str(idx)+ " does not exists","")
         else:
             return t_reg.syms[idx]
     elif type_ == RegisterType.AVAR:
         if not idx in a_reg.syms:
-            print("Semantic error: a%d does not exists"% idx)
+            addErr(ErrType.SEMANTIC, "Error: a" + str(idx)+ " does not exists","")
         else:
             return a_reg.syms[idx]
     elif type_ == RegisterType.VVAR:
         if not idx in v_reg.syms:
-            print("Semantic error: v%d does not exists"% idx)
+            addErr(ErrType.SEMANTIC, "Error: v" + str(idx)+ " does not exists","")
         else:
             return v_reg.syms[idx]
     elif type_ == RegisterType.SVAR:
         if not idx in s_reg.syms:
-            print("Semantic error: s%d does not exists"% idx)
+            addErr(ErrType.SEMANTIC, "Error: s" + str(idx)+ " does not exists","")
         else:
             return s_reg.syms[idx]
     elif type_ == RegisterType.SPVAR:
@@ -76,15 +77,28 @@ def updateSymbol(idx, type_, sym):
     elif type_ == RegisterType.SPVAR:
         if sym.type == ValType.INTEGER:
             sp_reg.value = sym.value    #updates the value
-            #sp_reg.type = sym.type  #updates the type
         else:
-            print("Semantic error: sp can't take ", str(sym.value), " as value, only ", sym(ValType.INTEGER))
+            addErr(ErrType.SEMANTIC, "Error: sp can't be " + str(sym.type)+ ". Only " + str(ValType.INTEGER),"")
     elif type_ == RegisterType.RVAR:
         if sym.type == ValType.INTEGER:
             ra_reg.value = sym.value
-            #ra_reg.type = sym.type
         else:
-            print("Semantic error: ra can't take ", str(sym.value), " as value, only", sym(ValType.INTEGER))
+            addErr(ErrType.SEMANTIC, "Error: ra can't be " + str(sym.type)+ ". Only " + str(ValType.INTEGER),"")
+
+def deleteSymbol(idx, type_):
+    '''delete a symbol from the specified table'''
+    if type_ == RegisterType.TVAR:
+        del t_reg.syms[idx]
+    elif type_ == RegisterType.AVAR:
+        del a_reg.syms[idx]
+    elif type_ == RegisterType.VVAR:
+        del v_reg.syms[idx]
+    elif type_ == RegisterType.SVAR:
+        del s_reg.syms[idx]
+    elif type_ == RegisterType.SPVAR:
+        sp_reg.value = 0
+    elif type_ == RegisterType.RVAR:
+        ra_reg.value = 0
 
 t_reg = SymbolTable({})
 a_reg = SymbolTable({})

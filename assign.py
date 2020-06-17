@@ -4,6 +4,7 @@ from operation import OperationExpression
 from st import Symbol, SymbolTable, getSymbol, updateSymbol, findSymbol
 from math import trunc
 from PyQt5 import QtWidgets
+from err import addErr, ErrType
 
 def solve_val(i):
     '''This function returns a ValExpression'''
@@ -32,6 +33,7 @@ def solve_val(i):
                     #It is necesary to travel through the given symbol value
                     r = throughDict(symb_FromAssign.value, arrAccess)
                     if r == None:
+                        addErr(ErrType.SEMANTIC, "","")
                         return ValExpression(0, ValType.INTEGER)
                     else:
                         return ValExpression(r.value, r.type)
@@ -73,11 +75,11 @@ def createIdxCol(col = []):
                 if isinstance(syym.value, int) or isinstance(syym.value, str) :
                     rcol.append(syym.value)
                 else:
-                    print("Semantic error: unabled to retrieve value from ", str(i.varType), " ", str(i.varName))    
+                    addErr(ErrType.SEMANTIC, "Error: unabled to retrieve value from "+ str(i.varType)+ ""+ str(i.varName),i.row)    
                     return None
             else:
                 #a symbol was not returned, so the var does not exist
-                print("Semantic error: the variable does not exists ", str(i.varType), " ", str(i.varName))
+                addErr(ErrType.SEMANTIC, "Error: the variable does not exists "+ str(i.varType)+ ""+ str(i.varName), i.row)
                 #return a None value
                 return None
     return rcol
@@ -111,7 +113,7 @@ def solve_pointer(sym):
                     return r
         else:
             #the symbol was not found so, an error pops up and returns a zero
-            print("Semantic error: unable reference ",str(valSym.varType), " ", str(valSym.varName))
+            addErr(ErrType.SEMANTIC, "Error: unable to reference "+str(valSym.varType)+ str(valSym.varName),"")
             return Symbol(None,ValType.INTEGER,0)
     else:
         return sym
@@ -125,22 +127,22 @@ def throughDict(dic, idxcol = []):
         for i in idxcol:
             if isinstance(tmp, dict):
                 if not i in tmp:
-                    print("Semantic error: given index value doesn't exist ", str(i))
+                    addErr(ErrType.SEMANTIC, "Error: given index value doesn't exist","")
                     return None
                 else:
                     tmp = tmp[i]
             elif isinstance(tmp, str):
                 #if the index is not integer
                 if not isinstance(i, int):
-                    print("Semantic error: illegal index for a string value ", str(i))
+                    addErr(ErrType.SEMANTIC,"Error: illegal index for a string value " + str(i) ,"")
                 #if the index is an integer but is out of bonds
                 if len(tmp)-1 > i:
                     return Symbol(None,ValType.STRING,tmp[i])
                 else:
-                    print("Semantic error: index out of border, string ", str(i))
+                    addErr(ErrType.SEMANTIC,"Error: index out of border, string: " +str(i) ,"")
                     return None
             else:
-                print("Semantic error: can't access through array to given Symbol")
+                addErr(ErrType.SEMANTIC, "Error: can't access through array to given symbol. " +str(tmp),"")
                 return None
         # symbol is about to be returned
         if isinstance(tmp, str):
@@ -152,9 +154,9 @@ def throughDict(dic, idxcol = []):
         else:
             #if the else statment is executed, perhaps there was a partial access
             # and reached object/element in the arrays is not a "flat value"
-            print("Semantic error: unknown value found in array")
+            addErr(ErrType.SEMANTIC, "Error: unknown value found in array " + str(tmp), "")
     except:
-        print("Semantic error: can't access through array")
+        addErr(ErrType.SEMANTIC, "Error: unable to access through array" ,"")
     return None
 
 def setValueInArray(array, idxcol, value):
@@ -164,7 +166,7 @@ def setValueInArray(array, idxcol, value):
     '''
     if not isinstance(array, dict):
         #if the array parameter is not a dictionary instance then an error will pop up
-        print("Semantic error: value in index %s cannot be listed" % str(idxcol[0]))
+        addErr(ErrType.SEMANTIC, "Cannot set a value at index " +str(idxcol[0]) + ". The given symbol is not an array","")
         return
     if len(idxcol) == 1:
         #If only one value remains in idxcol then it is assumed that the 
@@ -175,7 +177,7 @@ def setValueInArray(array, idxcol, value):
             #If the 'temp' position has already been taken and is not
             # a 'flat value' (integer, string, float) then
             #it is assumed that the <value> cannot be written there
-            print("Semantic error: index %s is already occupied" % str(temp))
+            addErr(ErrType.SEMANTIC, "Error: index '" +str(temp) +"' is already occupied","")
             return
         array[temp] = value
     else:
@@ -212,12 +214,12 @@ def setValueInArray(array, idxcol, value):
                 if len(idxcol) > 1:
                     # this warning will let it know if there was indices that was not used
                     # and therefore those indices are not necessary
-                    print("Semantic warning: unreachable index %s" % str(idxcol[1]))
+                    addErr(ErrType.SEMANTIC,"Warning: unreachable index " + str(idxcol[1]),"")
                 return
             else:
                 # if the index is not an integer then, an error will pop up
                 # It cannot use a non-integer value to index a string 
-                print("Semantic error: illegal index, string should be indexed with an integer")
+                addErr(ErrType.SEMANTIC, "Error: illegal index, string symbols should be indexed with integers","")
                 return
         setValueInArray(array[temp], idxcol, value)
 
@@ -251,8 +253,8 @@ def solve_assign(i):
         if check_var.type == ValType.ARRAY:
             #The array variable cannot be overwritten but it can be altered
             if var_Access == None:
-                print("Semantic error: not indexed value to an array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
-                print("     ", str(var_Assign.varType),str(var_Assign.varName), " was not assigned" )
+                addErr(ErrType.SEMANTIC, "Error: indexed access to an array variable expected\n     " + 
+                str(var_Assign.varType) + str(var_Assign.varName) + " was not assigned", var_Assign.row)
                 return
             else:
                 #if var_Access's value was not None
@@ -277,7 +279,7 @@ def solve_assign(i):
             return
     else:
         if var_Access != None:
-            print("Semantic warning: can't access through array to a non array variable ", str(var_Assign.varType), "",str(var_Assign.varName) )
+            addErr(ErrType.SEMANTIC, "Warning: indexed access to a non array variable "+str(var_Assign.varType)+ str(var_Assign.varName), var_Assign.row)
         updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
 
 def solve_oper(i):
@@ -292,90 +294,90 @@ def solve_oper(i):
         elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
             return Symbol(None, ValType.INTEGER, int(opl.value + opr.value))
         else:
-            print("Semantic error: can't add these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't add these operands " + str(typear), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.MINUS:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't substract strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't substract between string operands", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT for i in typear):
             return Symbol(None, ValType.FLOAT, float(opl.value - opr.value))
         elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
             return Symbol(None, ValType.INTEGER, int(opl.value - opr.value))
         else:
-            print("Semantic error: can't substract these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't substract these operands " + str(typear), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.TIMES:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't multiply strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't multiply strings", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT for i in typear):
             return Symbol(None, ValType.FLOAT, float(opl.value * opr.value))
         elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
             return Symbol(None, ValType.INTEGER, int(opl.value * opr.value))
         else:
-            print("Semantic error: can't multiply these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't multiply these operands " +str(typear), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.QUOTIENT:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't divide strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't divide strings", i.row)
             return Symbol(None, ValType.FLOAT, 0.0)
         elif any(i is ValType.INTEGER or ValType.FLOAT or ValType.CHAR for i in typear):
             if opr.value == 0:
-                print("Semantic error: division by zero")
+                addErr(ErrType.SEMANTIC, "Error: division by zero", i.row)
                 return Symbol(None, ValType.FLOAT, 0.0)
             else:
                 return Symbol(None, ValType.FLOAT, opl.value / opr.value)
         else:
-            print("Semantic error: can't divide these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't divide these operands " +str(typear), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.REMAINDER:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't get remainder from strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't get remainder from strings", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT for i in typear):
             if opr.value == 0:
-                print("Semantic error: division by zero")
+                addErr(ErrType.SEMANTIC, "Error: division by zero", i.row)
                 return Symbol(None, ValType.FLOAT, 0.0)
             else:
                 return Symbol(None, ValType.FLOAT, float(opl.value % opr.value))
         elif any(i is ValType.INTEGER or ValType.CHAR for i in typear):
             if opr.value == 0:
-                print("Semantic error: division by zero")
+                addErr(ErrType.SEMANTIC, "Error: division by zero", i.row)
                 return Symbol(None, ValType.INTEGER, 0)
             else:
                 return Symbol(None, ValType.INTEGER, int(opl.value % opr.value))
         else:
-            print("Semantic error: can't get remainder of these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't get remainder of these operands "+str(typear), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.NEGATIVE:
         opl = solve_val(i.e1)
         if opl.type == ValType.STRING:
-            print("Semantic error: can't get a negative value from string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't get a negative value from string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif opl.type == ValType.FLOAT:
             return Symbol(None, ValType.FLOAT, float(opl.value*-1))
         elif (opl.type == ValType.INTEGER or  opl.type == ValType.CHAR) :
             return Symbol(None, ValType.INTEGER, int(opl.value*-1))
         else:
-            print("Semantic error: can't a negative value of this operand %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't a negative value of this operand " +str(opl.type), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.ABS:
         opl = solve_val(i.e1)
         if opl.type == ValType.STRING:
-            print("Semantic error: can't get absolute value from string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't get absolute value from string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif opl.type == ValType.FLOAT:
             return Symbol(None, ValType.FLOAT, abs(opl.value))
@@ -384,39 +386,39 @@ def solve_oper(i):
         elif opl.type == ValType.CHAR:
             return Symbol(None, ValType.CHAR, opl.value)
         else:
-            print("Semantic error: Can't get absolute value from this operand %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't get absolute value from this operand "+ str(opl.type), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.NOT:
         opl = solve_val(i.e1)
         if opl.type == ValType.STRING:
-            print("Semantic error: can't negate a string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't negate a string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif opl.type == ValType.INTEGER or opl.type == ValType.CHAR or opl.type == ValType.FLOAT:
             temp = 0 if opl.value != 0 else 1
             return Symbol(None, ValType.INTEGER, temp)
         else:
-            print("Semantic error: Can't negate this operand %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot negate this operand " + str(opl.type), i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.AND:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't compare strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use <and> on strings", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmpl = 0 if opl.value == 0 else 1
             tmpr = 0 if opr.value == 0 else 1
             return Symbol(None, ValType.INTEGER, tmpl and tmpr)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use <and> on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.XOR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't compare strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use <xor> on strings", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmpl = 0 if opl.value == 0 else 1
@@ -425,26 +427,26 @@ def solve_oper(i):
             tmpr_n = 0 if opl.value != 0 else 1
             return Symbol(None, ValType.INTEGER, (tmpl and tmpr_n)  or (tmpl_n and tmpr))
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use <xor> on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.OR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't compare strings %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't use <or> on strings", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmpl = 0 if opl.value == 0 else 1
             tmpr = 0 if opr.value == 0 else 1
             return Symbol(None, ValType.INTEGER, tmpl or tmpr)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use <or> on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.NOTBW:
         opl = solve_val(i.e1)
         if opl.type == ValType.STRING:
-            print("Semantic error: can't negate a string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: can't negate a string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         else:
             temp = ~int(opl.value)
@@ -454,127 +456,137 @@ def solve_oper(i):
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use and-bitwise on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use and-bitwise on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             temp = int(opl.value) & int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use and-bitwise on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.ORBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use or-bitwise on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use or-bitwise on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             temp = int(opl.value) | int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use or-bitwise on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.XORBW:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use xor-bitwise on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use xor-bitwise on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             temp = int(opl.value) ^ int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use xor-bitwise on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.SHL:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use shift-left on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use shift-left on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             temp = int(opl.value) << int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use shift-left on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.SHR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use shift-right on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use shift-right on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             temp = int(opl.value) >> int(opr.value)
             return Symbol(None, ValType.INTEGER, temp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use shift-right on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.EQ:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        tmp = 1 if (opl.value == opr.value) else 0
-        return Symbol(None, ValType.INTEGER, tmp)
+        typear = [opl.type, opr.type]
+        try:
+            tmp = 1 if (opl.value == opr.value) else 0
+            return Symbol(None, ValType.INTEGER, tmp)
+        except:
+            addErr(ErrType.SEMANTIC, "Error: cannot compare these operands " + str(typear),  i.row)
+            return Symbol(None, ValType.INTEGER, 0)            
     elif i.op == Operator.NEQ:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
-        tmp = 1 if (opl.value != opr.value) else 0
-        return Symbol(None, ValType.INTEGER, tmp)
+        typear = [opl.type, opr.type]
+        try:
+            tmp = 1 if (opl.value != opr.value) else 0
+            return Symbol(None, ValType.INTEGER, tmp)
+        except:
+            addErr(ErrType.SEMANTIC, "Error: cannot compare these operands " + str(typear),  i.row)
+            return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.GR:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use 'greater than' on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'greater than' on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmp = 1 if (opl.value > opr.value) else 0
             return Symbol(None, ValType.INTEGER, tmp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'greater than' on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.GRE:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use 'greater than or equal' on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'greater than or equal' on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmp = 1 if (opl.value >= opr.value) else 0
             return Symbol(None, ValType.INTEGER, tmp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'greater than or equal' on  these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.LS:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use 'less than' on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'less than' on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmp = 1 if (opl.value < opr.value) else 0
             return Symbol(None, ValType.INTEGER, tmp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'less than' on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.LSE:
         opl = solve_val(i.e1)
         opr = solve_val(i.e2)
         typear = [opl.type, opr.type]
         if any(i is ValType.STRING for i in typear):
-            print("Semantic error: can't use 'less than or equal' on string %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'less than or equal' on string", i.row)
             return Symbol(None, ValType.INTEGER, 0)
         elif any(i is ValType.FLOAT or ValType.INTEGER or ValType.CHAR for i in typear):
             tmp = 1 if (opl.value <= opr.value) else 0
             return Symbol(None, ValType.INTEGER, tmp)
         else:
-            print("Semantic error: Can't compare these operands %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use 'less than or equal' on these operands " + str(typear),  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.AMP:
         # checks if variable exist
@@ -582,7 +594,7 @@ def solve_oper(i):
         if (r != None):
             return Symbol(None, ValType.POINTER, i.e1.value)
         else:
-            print("Semantic error: can't use & on ",str(i.e1.value.varType), " ", str(i.e1.value.varName), ", doesn't exists" )
+            addErr(ErrType.SEMANTIC, "Error: cannot use & on "+ str(i.e1.value.varType) +str(i.e1.value.varName) ", doesn't exist",  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
@@ -591,48 +603,38 @@ def solve_oper(i):
         elif opr.type == ValType.STRING:    
             if (len(opr.value) > 0 ):
                 r.value = ord(opr.value[0])
-                print(r.value)
             else:
                 r.value = 0
         elif opr.type == ValType.FLOAT:     r.value = trunc(opr.value)
         elif opr.type == ValType.INTEGER:   r.value = opr.value
-        elif opr.type == ValType.POINTER:   
-            print(opr.type, ' cannot cast to int ', i.row)
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
             if isinstance(tmp, str):        r.value = ord(tmp[0])
             elif isinstance(tmp, float):    r.value = trunc(tmp)
             elif isinstance(tmp, int):      r.value = tmp
-            else:                           print(opr.type, ' cannot cast to int', i.row)
-        elif opr.type == ValType.STRUCT:
-            print("Semantic error: ",opr.type, ' cannot cast to int ', i.row)
+            else:                           addErr(ErrType.SEMANTIC, "Error: value in array "+str(opr.type)+" cannot cast to " + str(ValType.INT),  i.row)
         else:
-            print("Semantic error: Can't cast this operand %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: "+str(opr.type)+" cannot cast to " + str(ValType.INT),  i.row)
         return r
     elif (i.op == Operator.CFLOAT):
         opr = solve_val(i.e1)
-        r = Symbol(None, ValType.FLOAT, 0)
+        r = Symbol(None, ValType.FLOAT, float(0.0))
         if opr.type == ValType.CHAR:        r.value = float(opr.value)
         elif opr.type == ValType.STRING:
             if (len(opr.value) > 0 ):
                 r.value = float(ord(opr.value[0]))
-                print(r.value)
             else:
                 r.value = 0
         elif opr.type == ValType.FLOAT:     r.value = opr.value
         elif opr.type == ValType.INTEGER:   r.value = float(opr.value)
-        elif opr.type == ValType.POINTER:   
-            print(opr.type, ' cannot cast to float ', i.row)
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
             if isinstance(tmp, str):        r.value = float(ord(tmp[0]))
             elif isinstance(tmp, float):    r.value = tmp
             elif isinstance(tmp, int):      r.value = float(tmp)
-            else:                           print(opr.type, ' cannot cast to float', i.row)
-        elif opr.type == ValType.STRUCT:
-            print("Semantic error: ",opr.type, ' cannot cast to float ', i.row)
+            else:                           addErr(ErrType.SEMANTIC, "Error: value in array "+str(opr.type)+" cannot cast to " + str(ValType.FLOAT),  i.row)
         else:
-            print("Semantic error: Can't cast this operand %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: "+str(opr.type)+" cannot cast to " + str(ValType.FLOAT),  i.row)
         return r
     elif (i.op == Operator.CCHAR):
         opr = solve_val(i.e1)
@@ -641,23 +643,18 @@ def solve_oper(i):
         elif opr.type == ValType.STRING:
             if (len(opr.value) > 0 ):
                 r.value = abs(ord(opr.value[0]) % 256)
-                print(r.value)
             else:
                 r.value = 0
         elif opr.type == ValType.FLOAT:     r.value = abs(trunc(opr.value) % 256)
-        elif opr.type == ValType.INTEGER:   r.value = abs(opr.value % 256)
-        elif opr.type == ValType.POINTER:   
-            print(opr.type, ' cannot cast to char ', i.row)
+        elif opr.type == ValType.INTEGER:   r.value = abs(opr.value % 256)   
         elif opr.type == ValType.ARRAY:
             tmp = getFirst(opr.value) #get first value
             if isinstance(tmp, str):        r.value = abs(ord(opr.value[0]) % 256)
             elif isinstance(tmp, float):    r.value = abs(trunc(opr.value) % 256)
             elif isinstance(tmp, int):      r.value = abs(tmp)%256
-            else:                           print(opr.type, ' cannot cast to char', i.row)
-        elif opr.type == ValType.STRUCT:
-            print("Semantic error: ",opr.type, ' cannot cast to char ', i.row)
+            else:                           addErr(ErrType.SEMANTIC, "Error: value in array "+str(opr.type)+" cannot cast to " + str(ValType.CHAR),  i.row)
         else:
-            print("Semantic error: Can't cast this operand %d", i.row)
+            addErr(ErrType.SEMANTIC, "Error: "+str(opr.type)+" cannot cast to " + str(ValType.CHAR),  i.row)
         return r
     elif i.op == Operator.READ:
         # shows an input box and save a string
@@ -666,7 +663,6 @@ def solve_oper(i):
         txt, msg = QtWidgets.QInputDialog.getText(None, 'Read', 'Enter here:')
         if msg:
             r.value = txt
-            print(r.value)
         return r
     elif i.op == Operator.ARRAY:
         # creates an array symbol
@@ -684,8 +680,8 @@ def getFirst(arr):
         elif isinstance(arr, float): return arr
         elif isinstance(arr, int): return arr
         else:
-            print("Semantic error: Can't access through unknown data structure (a)")
+            addErr(ErrType.SEMANTIC, "Error: can't access through unknown data structure (a)","")
     except: 
-        print("Semantic error: Can't access through unknown data structure (b)")
+        addErr(ErrType.SEMANTIC, "Error: can't access through unknown data structure (b)","")
         return 0
     return 0
