@@ -89,7 +89,7 @@ def solve_pointer(sym):
         On erro returns an integer symbol with value 0'''
     if sym.type == ValType.POINTER:
         #Gets the assignment value
-        valSym = sym.val
+        valSym = sym.value
         #gets an array access
         arrAccess = None if (valSym.valExp == None) else createIdxCol(valSym.valExp)
         #Gets the Symbol referenced
@@ -103,7 +103,7 @@ def solve_pointer(sym):
                 return solve_pointer(valSym)
             else:
                 #It is necesary to travel through the given symbol value
-                r = throughDict(valSym.val,arrAccess)
+                r = throughDict(valSym.value,arrAccess)
                 if r == None:
                     #an error took place when 'throughDict' were executed
                     return Symbol(None,ValType.INTEGER,0)
@@ -134,7 +134,7 @@ def throughDict(dic, idxcol = []):
                 if not isinstance(i, int):
                     print("Semantic error: illegal index for a string value ", str(i))
                 #if the index is an integer but is out of bonds
-                if len(tmp) < i:
+                if len(tmp)-1 > i:
                     return Symbol(None,ValType.STRING,tmp[i])
                 else:
                     print("Semantic error: index out of border, string ", str(i))
@@ -245,6 +245,8 @@ def solve_assign(i):
     var_Temp = Symbol(var_Assign.varName, var_Temp.type, var_Temp.value)
     if (check_var != None):
         #The variable already exists so, it has to be updated
+        #solve pointer
+        check_var = solve_pointer(check_var)
         #Checks if it's an array value
         if check_var.type == ValType.ARRAY:
             #The array variable cannot be overwritten but it can be altered
@@ -576,11 +578,11 @@ def solve_oper(i):
             return Symbol(None, ValType.INTEGER, 0)
     elif i.op == Operator.AMP:
         # checks if variable exist
-        r = getSymbol(i.e1.varName, i.e1.varType)
+        r = getSymbol(i.e1.value.varName, i.e1.value.varType)
         if (r != None):
-            return Symbol(None, ValType.POINTER, i.e1)
+            return Symbol(None, ValType.POINTER, i.e1.value)
         else:
-            print("Semantic error: can't use & on ",str(i.e1.varType), " ", str(i.e1.varName))
+            print("Semantic error: can't use & on ",str(i.e1.value.varType), " ", str(i.e1.value.varName), ", doesn't exists" )
             return Symbol(None, ValType.INTEGER, 0)
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
