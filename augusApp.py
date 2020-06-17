@@ -7,6 +7,7 @@ from ascLexer import parse as ascParse, parser as ascParser, lexer as ascLexer
 from ascAST import createAST
 import interpreter
 from err import createReport, lexicArgs, semanticArgs, sintacticArgs, linesCount_, createReport
+#from st import
 
 class Ui_augusApp(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
@@ -16,12 +17,15 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         # reference to a file
         self.fileRef = ""
         self.fileSaved = False
+        self.sT = None
+        self.ascDebugger = None
 
     def setupUi(self):
         self.setObjectName("augusApp")
         self.resize(800, 600)
-        self.setWindowIcon(QtGui.QIcon('augus.ico'))
-
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("augus.ico"),QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setAutoFillBackground(False)
         self.centralwidget.setObjectName("centralwidget")
@@ -131,9 +135,9 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.actionReplace.setObjectName("actionReplace")
         self.actionAbout = QtWidgets.QAction(self)
         self.actionAbout.setObjectName("actionAbout")
-        self.actionDark_Mode = QtWidgets.QAction(self)
-        self.actionDark_Mode.setCheckable(True)
-        self.actionDark_Mode.setObjectName("actionDark_Mode")
+        #self.actionDark_Mode = QtWidgets.QAction(self)
+        #self.actionDark_Mode.setCheckable(True)
+        #self.actionDark_Mode.setObjectName("actionDark_Mode")
         self.actionAscendent_Debugging = QtWidgets.QAction(self)
         self.actionAscendent_Debugging.setObjectName("actionAscendent_Debugging")
         self.actionAscendent_Without_Debugging = QtWidgets.QAction(self)
@@ -152,6 +156,9 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.actionContinue = QtWidgets.QAction(self)
         self.actionContinue.setEnabled(False)
         self.actionContinue.setObjectName("actionContinue")
+        self.actionShowSymbolTable = QtWidgets.QAction(self)
+        self.actionShowSymbolTable.setEnabled(False)
+        self.actionShowSymbolTable.setObjectName("actionShowSymbolTable")
         self.actionGo_To = QtWidgets.QAction(self)
         self.actionGo_To.setObjectName("actionGo_To")
         self.menuFile.addAction(self.actionNew)
@@ -180,7 +187,8 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.menuRun.addAction(self.actionStop_Debugging)
         self.menuRun.addAction(self.actionStep_Into)
         self.menuRun.addAction(self.actionContinue)
-        self.menuTools.addAction(self.actionDark_Mode)
+        self.menuRun.addAction(self.actionShowSymbolTable)
+        #self.menuTools.addAction(self.actionDark_Mode)
         self.menuHelp.addAction(self.actionAbout)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
@@ -224,8 +232,7 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.actionReplace.setText("Replace")
         self.actionReplace.setShortcut("Ctrl+H")
         self.actionAbout.setText("About")
-        
-        self.actionDark_Mode.setText("Dark Mode")
+        #self.actionDark_Mode.setText("Dark Mode")
         self.actionAscendent_Debugging.setText("Ascendent Debugging")
         self.actionAscendent_Debugging.setShortcut("F5")
         self.actionAscendent_Without_Debugging.setText("Ascendent Without Debugging")
@@ -240,6 +247,8 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.actionStep_Into.setShortcut("F11")
         self.actionContinue.setText("Continue")
         self.actionContinue.setShortcut("F6")
+        self.actionShowSymbolTable.setText("Show Symbol Table")
+        self.actionShowSymbolTable.setShortcut("Ctrl+T")
         self.actionGo_To.setText("Go To")
         self.actionGo_To.setShortcut("Ctrl+G")
         # -- File menu actions
@@ -247,12 +256,19 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.actionOpen.triggered.connect(self.openFile_action)
         self.actionSave.triggered.connect(self.saveFile_action)
         self.actionSave_As.triggered.connect(self.saveFileAs_action)
+        self.actionExit.triggered.connect(self.close)
         # -- Edit menu actions
         self.actionGo_To.triggered.connect(self.goTo_action)
         # -- Run menu actions
         self.actionAscendent_Debugging.triggered.connect(self.ascendentDebug_action)
         self.actionAscendent_Without_Debugging.triggered.connect(self.ascendentRun_action)
         self.actionDescendent_Without_Debugging.triggered.connect(self.descendentRun_action)
+
+        self.actionStop_Debugging.triggered.connect(self.stopDebug_action)
+        self.actionContinue.triggered.connect(self.continue_action)
+        self.actionRestart_Debugging.triggered.connect(self.restartDebug_action)
+        self.actionStep_Into.triggered.connect(self.stepInto_action)
+        self.actionShowSymbolTable.triggered.connect(self.showSymbolTable_action)
     
     def newFile_action(self):
         """Checks reference of actual file being edited. If it's saved then just clear the input text, if it isn't saveFile is called"""
@@ -367,9 +383,6 @@ class Ui_augusApp(QtWidgets.QMainWindow):
                     "It's not possible to go to the indicated position"
                 )
 
-    def ascendentDebug_action(self):
-        pass
-    
     def ascendentRun_action(self):
         ascLexer.lineno = 1
         txt = self.txtInput.toPlainText()
@@ -378,7 +391,6 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         semanticArgs.clear()
         # create the ast tree graph        
         createAST(txt)
-        createReport(self.txtInput.document().blockCount())
         # create the ast tree execution
         astRunner = ascParse(txt)
         if(astRunner):
@@ -388,10 +400,129 @@ class Ui_augusApp(QtWidgets.QMainWindow):
             if (run.checkLabel()):
                 #execute de ast tree
                 run.run()
+        createReport(self.txtInput.document().blockCount())
         ascParser.restart() 
 
     def descendentRun_action(self):
         pass
+
+    def ascendentDebug_action(self):
+        '''start the execution step by step'''
+        #lexer and parser called
+        ascLexer.lineno = 1
+        txt = self.txtInput.toPlainText()
+        lexicArgs.clear()
+        sintacticArgs.clear()
+        semanticArgs.clear()
+        # create the ast tree graph        
+        createAST(txt)
+        # create the ast tree execution
+        astRunner = ascParse(txt)
+        if(astRunner):
+            # create an instance of interpreter
+            self.ascDebugger = interpreter.Interpreter(astRunner, self.txtOutput)
+            if (self.ascDebugger.checkLabel() and self.ascDebugger.checkMain()):  
+                #shows the symbols table
+                self.sT = SymbolsGrid(self)
+                self.sT.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+                self.sT.show()         
+                #move the cursor at the begin of the text
+                self.txtInput.moveCursor(QtGui.QTextCursor.Start,QtGui.QTextCursor.MoveAnchor)
+                #block any posible edit
+                self.txtInput.setReadOnly(True)
+                self.txtInput.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+                #restart index
+                interpreter.Interpreter.idx_debug = 0
+                #disable actions
+                self.actionNew.setEnabled(False)
+                self.actionOpen.setEnabled(False)
+                self.actionAscendent_Debugging.setEnabled(False)
+                self.actionAscendent_Without_Debugging.setEnabled(False)
+                self.actionDescendent_Without_Debugging.setEnabled(False)
+                #enable actions
+                self.actionRestart_Debugging.setEnabled(True)
+                self.actionStop_Debugging.setEnabled(True)
+                self.actionStep_Into.setEnabled(True)
+                self.actionContinue.setEnabled(True)
+                self.actionShowSymbolTable.setEnabled(True)
+
+    def restartDebug_action(self):
+        pass
+
+    def stopDebug_action(self):
+        try:
+            self.sT.close()
+        except:
+            pass
+        #create err reports
+        createReport(self.txtInput.document().blockCount())
+        try:
+            ascParser.restart() 
+        except:
+            pass
+        #move the cursor at the begin of the text
+        self.txtInput.moveCursor(QtGui.QTextCursor.Start,QtGui.QTextCursor.MoveAnchor)
+        #enable edit
+        self.txtInput.setReadOnly(False)
+        self.txtInput.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
+        #enable actions
+        self.actionNew.setEnabled(True)
+        self.actionOpen.setEnabled(True)
+        self.actionAscendent_Debugging.setEnabled(True)
+        self.actionAscendent_Without_Debugging.setEnabled(True)
+        self.actionDescendent_Without_Debugging.setEnabled(True)
+        #disable actions
+        self.actionRestart_Debugging.setEnabled(False)
+        self.actionStop_Debugging.setEnabled(False)
+        self.actionStep_Into.setEnabled(False)
+        self.actionContinue.setEnabled(False)
+        self.actionShowSymbolTable.setEnabled(False)
+
+    def stepInto_action(self):
+        self.ascDebugger.drun()
+        if interpreter.Interpreter.idx_debug < 0:
+            #The execution has ended or an error ocurred
+            self.stopDebug_action()
+        else:
+            #enable edit
+            self.txtInput.setReadOnly(False)
+            self.txtInput.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
+            #Moves the cursor
+            self.txtInput.moveCursor(QtGui.QTextCursor.NextBlock, QtGui.QTextCursor.MoveAnchor)
+            #Fixs the cursor
+            self.txtInputFixCursorDebug()
+            #disable edit
+            self.txtInput.setReadOnly(True)
+            self.txtInput.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+            
+
+    def continue_action(self):
+        pass
+
+    def showSymbolTable_action(self):
+        '''show the symbol table'''
+        try:
+            self.sT.close()
+        except:
+            pass
+        self.sT = SymbolsGrid(self)
+        self.sT.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.sT.show()
+
+    def txtInputFixCursorDebug(self):
+        '''this function fixes the cursor position, puts the cursor at the beggining of the 
+        first block with text'''
+        while (True):
+            txtcursor = self.txtInput.textCursor()
+            #gets the text of the block in which the cursor is
+            txtText = txtcursor.block().text().strip()
+            if txtText and txtText[0] != '#':
+                #there is something in that block and  
+                # the first character isn't a #, so it isn't a commentary
+                # leavs the loop
+                break
+            if  not self.txtInput.moveCursor(QtGui.QTextCursor.NextBlock, QtGui.QTextCursor.MoveAnchor):
+                break
 
     def txtInputCursorPositionChanged_action(self):
         txtcursor = self.txtInput.textCursor()
@@ -405,7 +536,88 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         self.fileSaved = False
         self.lblStatus.setText("Not Saved")
 
+    def closeEvent(self, event):
+        if not self.fileSaved:
+            msg = QtWidgets.QMessageBox.question(
+                self,'New',
+                'Do you want to save changes before?',
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel)
+            if msg == QtWidgets.QMessageBox.Yes:
+                self.saveFile_action()
+                event.accept()
+            elif msg == QtWidgets.QMessageBox.No:
+                event.accept
+            elif msg == QtWidgets.QMessageBox.Cancel:
+                event.ignore()
+    
+
+class SymbolsGrid(QtWidgets.QDialog):
+    def __init__(self, parent = None):
+        super(SymbolsGrid, self).__init__(parent)
+        self.setupUi()
+        self.closeEvent
+        self.installEventFilter(self)
+
+    def setupUi(self):
+        self.setObjectName("Form")
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.resize(640, 480)
+        self.setModal(False)
+        self.setMinimumSize(QtCore.QSize(640, 480))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("augus.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(icon)
+        self.gridLayout = QtWidgets.QGridLayout(self)
+        self.gridLayout.setObjectName("gridLayout")
+        self.tableWidget = QtWidgets.QTableWidget(self)
+        self.tableWidget.setEnabled(True)
+        self.tableWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.tableWidget.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
+        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.tableWidget.setDragEnabled(False)
+        self.tableWidget.setAlternatingRowColors(True)
+        self.tableWidget.setGridStyle(QtCore.Qt.SolidLine)
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.setColumnCount(5)
+        self.tableWidget.setObjectName("tableWidget")
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(1, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(2, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(3, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(4, item)
+        self.gridLayout.addWidget(self.tableWidget, 0, 0, 1, 1)
+        self.setWindowTitle("Symbols table")
+        self.tableWidget.setSortingEnabled(True)
+        item = self.tableWidget.horizontalHeaderItem(0)
+        item.setText("Id.")
+        item = self.tableWidget.horizontalHeaderItem(1)
+        item.setText("Type")
+        item = self.tableWidget.horizontalHeaderItem(2)
+        item.setText("Value")
+        item = self.tableWidget.horizontalHeaderItem(3)
+        item.setText("Dimension")
+        item = self.tableWidget.horizontalHeaderItem(4)
+        item.setText("Ref.")
+
+    def updateGrid(self):
+        pass
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() in (QtCore.Qt.Key_Return,
+                QtCore.Qt.Key_Escape,
+                QtCore.Qt.Key_Enter,):
+                return True
+        return super(SymbolsGrid, self).eventFilter(obj,event)
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     u = Ui_augusApp()
     sys.exit(app.exec_())
+

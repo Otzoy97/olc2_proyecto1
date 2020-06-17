@@ -8,6 +8,8 @@ from datetime import datetime
 from err import addErr, ErrType
 
 class Interpreter():
+    #index to keep track of the index beign executed
+    idx_debug = 0    
     def __init__(self,astTree,QtOutpu):
         self.astTree = astTree
         self.nextLabel = None
@@ -49,10 +51,9 @@ class Interpreter():
     
     def run(self):
         '''
-            This function checks if the first label name is main and start the execution
+            This function start the execution of the code
         '''
-        if not 'main' in self.labelDict or self.labelDict['main'] != 0:
-            addErr(ErrType.SEMANTIC, "Error: 'main' label must be at the begging of the code", "")
+        if not self.checkMain:
             return
         # this variable will work as a counter and 
         # will specify what position of the syntax tree is running
@@ -123,3 +124,78 @@ class Interpreter():
         cteTime = now.strftime("%H:%M:%S")
         createReport()
         self.QtOutput.appendPlainText("execution ended " + cteTime +"\n")
+
+    def checkMain(self):
+        '''
+            This function checks if the first label name is main
+        '''
+        if not 'main' in self.labelDict or self.labelDict['main'] != 0:
+            addErr(ErrType.SEMANTIC, "Error: 'main' label must be at the begging of the code", "")
+            return False
+        return True
+
+    def drun(self):
+        '''
+            This function starts the debuggin
+        '''
+        if Interpreter.idx_debug >= 0 and Interpreter.idx_debug < len(self.astTree):
+            lenNode = len(self.astTree[Interpreter.idx_debug])
+            if lenNode == 1:
+                objNode = self.astTree[Interpreter.idx_debug][0]
+                if isinstance(objNode, Exit):
+                    #print("Execution ended")
+                    Interpreter.idx_debug = -1
+                elif isinstance(objNode, Print):
+                    var_Temp = None
+                    #solve oper and print the result
+                    if isinstance(objNode.oper, ValExpression):
+                        #call solve_var, this function returns an instance of ValExpression
+                        var_Temp = solve_val(objNode.oper)
+                    elif isinstance(objNode.oper, OperationExpression):
+                        #call solve_opr, this function return an instance of Symbol
+                        var_Temp = solve_oper(objNode.oper) #returns Symbol
+                    if (var_Temp.type != ValType.FLOAT and var_Temp.type != ValType.STRING and 
+                    var_Temp.type != ValType.INTEGER and var_Temp.type != ValType.CHAR):
+                        addErr(ErrType.SEMANTIC, "Error: cannot print an array", objNode.row)
+                    else:
+                        prevTxt = str(self.QtOutput.toPlainText())
+                        prevTxt += str(var_Temp.value).replace('\\n','\n')
+                        self.QtOutput.setPlainText(prevTxt)
+                elif isinstance(objNode, Unset):
+                    #will delete a symbol
+                    assig = objNode.varn
+                    s = getSymbol(assig.varName, assig.varType)
+                    if s:
+                        deleteSymbol(assig.varName,assig.varType)
+                    else:
+                        addErr(ErrType.SEMANTIC, "Error: can't unset variable", objNode.row)                    
+                elif isinstance(objNode, GoTo):
+                    #load the value for the key given by label's name
+                    if not objNode.name  in self.labelDict:
+                        addErr(ErrType.SEMANTIC, "Error: Label '"+objNode.name +"' does not exist", objNode.row)
+                        Interpreter.idx_debug = -1
+                    Interpreter.idx_debug = self.labelDict[objNode.name]
+                elif isinstance(objNode, If):
+                    #solve oper and if the result is not 0 then it will make a jump
+                    var_Temp = None
+                    #solve oper and make decision
+                    if isinstance(objNode.oper, ValExpression):
+                        #call solve_var, this function returns an instance of ValExpression
+                        var_Temp = solve_val(objNode.oper)
+                    elif isinstance(objNode.oper, OperationExpression):
+                        #call solve_opr, this function return an instance of Symbol
+                        var_Temp = solve_oper(objNode.oper) #returns Symbol
+                    #var_Temp.value has to be an integer type
+                    if not isinstance(var_Temp.value, int):
+                        addErr(ErrType.SEMANTIC, "Error: If statment can't make decision upon the given operation", objNode.row)
+                    elif (var_Temp.value != 0):
+                        if not objNode.name in self.labelDict:
+                            addErr(ErrType.SEMANTIC, "Error: Label '"+objNode.name +"' does not exist", objNode.row)
+                            Interpreter.idx_debug = -1
+                        Interpreter.idx_debug = self.labelDict[objNode.name]
+            elif lenNode == 2:
+                solve_assign(self.astTree[Interpreter.idx_debug])
+            #increment the counter
+            Interpreter.idx_debug += 1
+        else:
+            Interpreter.idx_debug = -1
