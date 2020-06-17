@@ -308,7 +308,12 @@ def p_opnr(t):
 
 def p_error(t):
     if t:
-        addErr(ErrType.SINTACTIC, "Can't reduce '"+ str(t.value) +"'", t.lineno)
+        tmp = str(t.value)
+        if t.value == '>':
+            tmp = "greater-than symbol"
+        elif t.value == '<':
+            tmp = "less-than symbol"
+        addErr(ErrType.SINTACTIC, "Can't reduce '"+ tmp +"'", t.lineno)
         parser.errok()
     else:
         addErr(ErrType.SINTACTIC, "Unexpected EOF", "")
@@ -338,7 +343,7 @@ def createAST(input):
     now = datetime.now()
     fstr = now.strftime("%d%m%y-%H%M%S")
     #render the graph
-    dot.render('ascAST'+fstr,'report',False,True,'svg')
+    dot.render('ascAST'+fstr,'report',False,True,'pdf')
     #clear the stack parser
     parser.restart()
     #clear the dot body

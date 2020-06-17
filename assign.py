@@ -166,7 +166,7 @@ def setValueInArray(array, idxcol, value):
     '''
     if not isinstance(array, dict):
         #if the array parameter is not a dictionary instance then an error will pop up
-        addErr(ErrType.SEMANTIC, "Cannot set a value at index " +str(idxcol[0]) + ". The given symbol is not an array","")
+        addErr(ErrType.SEMANTIC, "Error: cannot set a value at index " +str(idxcol[0]) + ". \nThe given symbol is not an array or the index '" +str(idxcol[0]) +"' is already occupied","")
         return
     if len(idxcol) == 1:
         #If only one value remains in idxcol then it is assumed that the 
@@ -275,11 +275,13 @@ def solve_assign(i):
             else:
                 updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp)     
         else:
+            if var_Access != None:
+                addErr(ErrType.SEMANTIC, "Warning: indexed access to a non array variable "+str(var_Assign.varType)+ str(var_Assign.varName), var_Assign.row)
             updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
             return
     else:
         if var_Access != None:
-            addErr(ErrType.SEMANTIC, "Warning: indexed access to a non array variable "+str(var_Assign.varType)+ str(var_Assign.varName), var_Assign.row)
+            addErr(ErrType.SEMANTIC, "Warning: indexed access to a non existent array variable "+str(var_Assign.varType)+ str(var_Assign.varName), var_Assign.row)
         updateSymbol(var_Assign.varName, var_Assign.varType, var_Temp) 
 
 def solve_oper(i):
@@ -594,7 +596,7 @@ def solve_oper(i):
         if (r != None):
             return Symbol(None, ValType.POINTER, i.e1.value)
         else:
-            addErr(ErrType.SEMANTIC, "Error: cannot use & on "+ str(i.e1.value.varType) +str(i.e1.value.varName) ", doesn't exist",  i.row)
+            addErr(ErrType.SEMANTIC, "Error: cannot use & on "+ str(i.e1.value.varType) +str(i.e1.value.varName)+ ", doesn't exist",  i.row)
             return Symbol(None, ValType.INTEGER, 0)
     elif (i.op == Operator.CINT):
         opr = solve_val(i.e1)
@@ -612,9 +614,9 @@ def solve_oper(i):
             if isinstance(tmp, str):        r.value = ord(tmp[0])
             elif isinstance(tmp, float):    r.value = trunc(tmp)
             elif isinstance(tmp, int):      r.value = tmp
-            else:                           addErr(ErrType.SEMANTIC, "Error: value in array "+str(opr.type)+" cannot cast to " + str(ValType.INT),  i.row)
+            else:                           addErr(ErrType.SEMANTIC, "Error: value in array "+str(opr.type)+" cannot cast to " + str(ValType.INTEGER),  i.row)
         else:
-            addErr(ErrType.SEMANTIC, "Error: "+str(opr.type)+" cannot cast to " + str(ValType.INT),  i.row)
+            addErr(ErrType.SEMANTIC, "Error: "+str(opr.type)+" cannot cast to " + str(ValType.INTEGER),  i.row)
         return r
     elif (i.op == Operator.CFLOAT):
         opr = solve_val(i.e1)
