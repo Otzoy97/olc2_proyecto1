@@ -240,15 +240,9 @@ def p_dml2(t):
     t[0] = [t[1]]
 
 def p_dmn_int(t):
-    '''dmn  : CORIZQ INT_VAL CORDER'''
-    t[0] = t[2] #returns integer value
-
-def p_dmn_string(t):
-    '''dmn  : CORIZQ STRING_VAL CORDER'''
-    t[0] = t[2] #returns string value
-
-def p_dmn_idt(t):
-    '''dmn  : CORIZQ vrn CORDER'''
+    '''dmn  : CORIZQ INT_VAL CORDER
+    |CORIZQ STRING_VAL CORDER
+    |CORIZQ vrn CORDER'''
     t[0] = t[2] #returns assignment instance
 
 def p_bopr(t):
