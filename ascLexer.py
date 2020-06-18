@@ -241,8 +241,8 @@ def p_dml2(t):
 
 def p_dmn_int(t):
     '''dmn  : CORIZQ INT_VAL CORDER
-    |CORIZQ STRING_VAL CORDER
-    |CORIZQ vrn CORDER'''
+    | CORIZQ STRING_VAL CORDER
+    | CORIZQ vrn CORDER'''
     t[0] = t[2] #returns assignment instance
 
 def p_bopr(t):

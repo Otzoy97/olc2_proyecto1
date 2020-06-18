@@ -4,6 +4,7 @@ from pathlib import Path
 from PyQt5 import QtCore, QtGui, QtWidgets
 from QCodeEditor import QCodeEditor
 from ascLexer import parse as ascParse, parser as ascParser, lexer as ascLexer
+from descLexer import parse as descParse, parser as descParser, lexer as descLexer
 from ascAST import createAST
 from descAST import createASTD
 import interpreter
@@ -412,15 +413,21 @@ class Ui_augusApp(QtWidgets.QMainWindow):
         ascParser.restart() 
 
     def descendentRun_action(self):
-        ascLexer.lineno = 1
+        descLexer.lineno = 1
         txt = self.txtInput.toPlainText()
         lexicArgs.clear()
         sintacticArgs.clear()
         semanticArgs.clear()
         #create the ast tree grpah
         createASTD(txt)
+        #create the ast tree execution
+        descRunner = descParse(txt)
+        if (descRunner):
+            run = interpreter.Interpreter(descRunner, self.txtOutput, self.txtInput)
+            if (run.checkLabel()):
+                run.run()
         createReport(self.txtInput.document().blockCount())
-
+        descParser.restart()
 
     def ascendentDebug_action(self):
         '''start the execution step by step'''
