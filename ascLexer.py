@@ -159,17 +159,17 @@ def p_ist_assign(t):
 
 def p_ist_unJmp(t):
     '''ist  : GOTO LBS SCOLON'''
-    gt = GoTo(t[2], t.lineno(1))
+    gt = GoTo(t[2], t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     t[0] = [gt]
 
 def p_ist_cdJmp(t):
     '''ist  : IF PARIZQ opr PARDER GOTO LBS SCOLON'''
-    cdJmp = If(t[3],t[6], t.lineno(1))
+    cdJmp = If(t[3],t[6], t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     t[0] = [cdJmp]
 
 def p_ist_lbs(t):
     '''ist  : LBS COLON'''
-    Lbl = Label(t[1], t.lineno(1))
+    Lbl = Label(t[1], t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     t[0] = [Lbl]
 
 def p_ist_ntv(t):
@@ -182,11 +182,11 @@ def p_empty(t):
 
 def p_ntv_unset(t):
     '''ntv  : UNSET PARIZQ idt PARDER'''
-    t[0] = Unset(t[3], t.lineno(1))
+    t[0] = Unset(t[3], t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_ntv_print(t):
     '''ntv  : PRINT PARIZQ opn PARDER'''
-    t[0] = Print(t[3], t.lineno(1))
+    t[0] = Print(t[3], t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_ntv_exit(t):
     '''ntv  : EXIT'''
@@ -205,30 +205,30 @@ def p_idt(t):
 def p_vrn_t(t):
     '''vrn  : TVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.TVAR, None, t.lineno(1))
+    t[0] = Assignment(idxVar, RegisterType.TVAR, None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_vrn_a(t):
     '''vrn  : AVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.AVAR, None, t.lineno(1))
+    t[0] = Assignment(idxVar, RegisterType.AVAR, None, t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_vrn_v(t):
     '''vrn  : VVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.VVAR, None, t.lineno(1))
+    t[0] = Assignment(idxVar, RegisterType.VVAR, None, t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_vrn_r(t):
     '''vrn  : RVAR'''
-    t[0] = Assignment(0, RegisterType.RVAR, None, t.lineno(1))
+    t[0] = Assignment(0, RegisterType.RVAR, None, t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_vrn_s(t):
     '''vrn  : SVAR'''
     idxVar = int(t[1][2:])
-    t[0] = Assignment(idxVar, RegisterType.SVAR, None, t.lineno(1))
+    t[0] = Assignment(idxVar, RegisterType.SVAR, None, t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_vrn_sp(t):
     '''vrn  : SPVAR'''
-    t[0] = Assignment(0, RegisterType.SPVAR, None, t.lineno(1))
+    t[0] = Assignment(0, RegisterType.SPVAR, None, t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_dml1(t):
     '''dml  : dml dmn'''
@@ -272,49 +272,49 @@ def p_bopr(t):
             | opn LS opn
             | opn LSE opn'''
     if t[2] == '+':
-        t[0] = OperationExpression(Operator.PLUS, t[1], t[3],t.lineno(1))
+        t[0] = OperationExpression(Operator.PLUS, t[1], t[3],t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '-':
-        t[0] = OperationExpression(Operator.MINUS, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.MINUS, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '*':
-        t[0] = OperationExpression(Operator.TIMES, t[1], t[3], t.lineno(1))
+        t[0] = OperationExpression(Operator.TIMES, t[1], t[3], t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '/':
-        t[0] = OperationExpression(Operator.QUOTIENT, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.QUOTIENT, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '%':
-        t[0] = OperationExpression(Operator.REMAINDER, t[1], t[3],t.lineno(1))
+        t[0] = OperationExpression(Operator.REMAINDER, t[1], t[3],t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '&&':
-        t[0] = OperationExpression(Operator.AND, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.AND, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == 'xor':
-        t[0] = OperationExpression(Operator.XOR, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.XOR, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '&':
-        t[0] = OperationExpression(Operator.ANDBW, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.ANDBW, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '|':
-        t[0] = OperationExpression(Operator.ORBW, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.ORBW, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '^':
-        t[0] = OperationExpression(Operator.XORBW, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.XORBW, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '<<':
-        t[0] = OperationExpression(Operator.SHL, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.SHL, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '>>':
-        t[0] = OperationExpression(Operator.SHR, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.SHR, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '==':
-        t[0] = OperationExpression(Operator.EQ, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.EQ, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '!=':
-        t[0] = OperationExpression(Operator.NEQ, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.NEQ, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '>':
-        t[0] = OperationExpression(Operator.GR, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.GR, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '>=':
-        t[0] = OperationExpression(Operator.GRE, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.GRE, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '<':
-        t[0] = OperationExpression(Operator.LS, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.LS, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == '<=':
-        t[0] = OperationExpression(Operator.LSE, t[1], t[3] ,t.lineno(1))
+        t[0] = OperationExpression(Operator.LSE, t[1], t[3] ,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_nopr(t):
     '''opr  : READ PARIZQ PARDER
             | ARRAY PARIZQ PARDER'''
     if t[1] == 'read':
-        t[0] = OperationExpression(Operator.READ, None, None,t.lineno(1))
+        t[0] = OperationExpression(Operator.READ, None, None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[1] == 'array':
-        t[0] = OperationExpression(Operator.ARRAY, None, None,t.lineno(1))
+        t[0] = OperationExpression(Operator.ARRAY, None, None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
             
 def p_uopr(t):
     '''opr  : MINUS opn
@@ -323,26 +323,26 @@ def p_uopr(t):
             | ANDBW idt
             | ABS PARIZQ opn PARDER'''
     if t[1] == '-':
-        t[0] = OperationExpression(Operator.NEGATIVE, t[2], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.NEGATIVE, t[2], None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[1] == '!':
-        t[0] = OperationExpression(Operator.NOT, t[2], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.NOT, t[2], None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[1] == '~':
-        t[0] = OperationExpression(Operator.NOTBW, t[2], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.NOTBW, t[2], None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[1] == '&':
-        t[0] = OperationExpression(Operator.AMP, ValExpression(t[2],ValType.REFVAR), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.AMP, ValExpression(t[2],ValType.REFVAR), None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[1] == 'abs':
-        t[0] = OperationExpression(Operator.ABS, t[3], None,t.lineno(1))
+        t[0] = OperationExpression(Operator.ABS, t[3], None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_copr(t):
     '''opr  : PARIZQ INT PARDER idt
             | PARIZQ FLOAT PARDER idt
             | PARIZQ CHAR PARDER idt'''
     if t[2] == 'int':
-        t[0] = OperationExpression(Operator.CINT, ValExpression(t[4],ValType.REFVAR,t.lineno(1)), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CINT, ValExpression(t[4],ValType.REFVAR,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1), None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == 'float':
-        t[0] = OperationExpression(Operator.CFLOAT, ValExpression(t[4],ValType.REFVAR,t.lineno(1)), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CFLOAT, ValExpression(t[4],ValType.REFVAR,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1), None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
     elif t[2] == 'char':
-        t[0] = OperationExpression(Operator.CCHAR, ValExpression(t[4],ValType.REFVAR,t.lineno(1)), None,t.lineno(1))
+        t[0] = OperationExpression(Operator.CCHAR, ValExpression(t[4],ValType.REFVAR,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1), None,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_opn_opr(t):
     '''opr  : opn'''
@@ -350,20 +350,20 @@ def p_opn_opr(t):
 
 def p_opnf(t):
     '''opn  : FLOAT_VAL'''
-    t[0] = ValExpression(t[1],ValType.FLOAT,t.lineno(1))
+    t[0] = ValExpression(t[1],ValType.FLOAT,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_opni(t):
     '''opn  : INT_VAL'''
-    t[0] = ValExpression(t[1],ValType.INTEGER,t.lineno(1))
+    t[0] = ValExpression(t[1],ValType.INTEGER,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_opns(t):
     '''opn  : STRING_VAL'''
-    t[0] = ValExpression(t[1],ValType.STRING,t.lineno(1))
+    t[0] = ValExpression(t[1],ValType.STRING,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_opnr(t):
     '''opn  : idt'''
     #t[1] is an instance of Assignment
-    t[0] = ValExpression(t[1],ValType.REFVAR,t.lineno(1))
+    t[0] = ValExpression(t[1],ValType.REFVAR,t.lexer.lexdata[0: t.lexer.lexpos].count("\n") + 1)
 
 def p_error(t):
     if t:

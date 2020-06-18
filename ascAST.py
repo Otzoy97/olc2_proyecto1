@@ -313,7 +313,7 @@ def p_error(t):
             tmp = "greater-than symbol"
         elif t.value == '<':
             tmp = "less-than symbol"
-        addErr(ErrType.SINTACTIC, "Can't reduce '"+ tmp +"'", t.lineno)
+        addErr(ErrType.SINTACTIC, "Can't reduce '"+ tmp +"'", t.lexer.lexdata[0: t.lexpos].count("\n") + 1)
         parser.errok()
     else:
         addErr(ErrType.SINTACTIC, "Unexpected EOF", "")
@@ -335,7 +335,7 @@ def createAST(input):
         # if root is not None
         dot.node(str(id(root)),'S')
         for i in root:
-            dot.node(str(id(i)), str(i.val))
+            dot.node(str(id(i)), str(i.val).replace("\n","\\n"))
             dot.edge(str(id(root)), str(id(i)))
             travelTree(i)
     #print(dot.source)
@@ -354,7 +354,7 @@ def travelTree(root):
         Recursively goes through the nodes and construct an ast tree
     '''
     for i in root.children:
-        dot.node(str(id(i)), str(i.val))
+        dot.node(str(id(i)), str(i.val).replace("\n","\\n"))
         dot.edge(str(id(root)), str(id(i)))
         travelTree(i)
 
