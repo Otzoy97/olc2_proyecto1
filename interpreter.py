@@ -1,6 +1,6 @@
 from instruction import Print, Unset, Exit, If, GoTo, Assignment, Label
 from assign import solve_assign, solve_oper, solve_val
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui, QtCore
 from operation import ValExpression, OperationExpression
 from expression import ValType
 from st import t_reg,a_reg,v_reg,s_reg,ra_reg,sp_reg, Symbol, SymbolTable, getSymbol, deleteSymbol, createReport
@@ -10,17 +10,12 @@ from err import addErr, ErrType
 class Interpreter():
     #index to keep track of the index beign executed
     idx_debug = 0    
-    def __init__(self,astTree,QtOutpu):
+    def __init__(self,astTree,QtOutput,QtInput):
         self.astTree = astTree
         self.nextLabel = None
         self.labelDict = {}
-        self.QtOutput = QtOutpu
-        global t_reg
-        global a_reg
-        global v_reg
-        global s_reg
-        global ra_reg
-        global sp_reg
+        self.QtOutput = QtOutput
+        self.QtInput = QtInput
         t_reg.syms.clear()
         a_reg.syms.clear()
         v_reg.syms.clear()
@@ -48,12 +43,21 @@ class Interpreter():
                 addErr(ErrType.SEMANTIC, "Error: The label '" + str(i[1][0].name) + "' already exists", i[1][0].row)
                 return False
         return True
-    
+
+    def checkMain(self):
+        '''
+            This function checks if the first label name is main
+        '''
+        if not 'main' in self.labelDict or self.labelDict['main'] != 0:
+            addErr(ErrType.SEMANTIC, "Error: 'main' label must be at the begging of the code", "")
+            return False
+        return True
+
     def run(self):
         '''
             This function start the execution of the code
         '''
-        if not self.checkMain:
+        if not self.checkMain():
             return
         # this variable will work as a counter and 
         # will specify what position of the syntax tree is running
@@ -125,14 +129,15 @@ class Interpreter():
         createReport()
         self.QtOutput.appendPlainText("execution ended " + cteTime +"\n")
 
-    def checkMain(self):
-        '''
-            This function checks if the first label name is main
-        '''
-        if not 'main' in self.labelDict or self.labelDict['main'] != 0:
-            addErr(ErrType.SEMANTIC, "Error: 'main' label must be at the begging of the code", "")
-            return False
-        return True
+    def restartSymbols(self):
+        t_reg.syms.clear()
+        a_reg.syms.clear()
+        v_reg.syms.clear()
+        s_reg.syms.clear()
+        ra_reg.value = 0
+        ra_reg.type = ValType.INTEGER
+        sp_reg.value = 0
+        sp_reg.type = ValType.INTEGER
 
     def drun(self):
         '''
@@ -145,6 +150,7 @@ class Interpreter():
                 if isinstance(objNode, Exit):
                     #print("Execution ended")
                     Interpreter.idx_debug = -1
+                    return
                 elif isinstance(objNode, Print):
                     var_Temp = None
                     #solve oper and print the result
@@ -174,7 +180,17 @@ class Interpreter():
                     if not objNode.name  in self.labelDict:
                         addErr(ErrType.SEMANTIC, "Error: Label '"+objNode.name +"' does not exist", objNode.row)
                         Interpreter.idx_debug = -1
-                    Interpreter.idx_debug = self.labelDict[objNode.name]
+                        return
+                    else:
+                        Interpreter.idx_debug = self.labelDict[objNode.name]
+                        #Attemps to put the cursor on the label
+                        cursor = self.QtInput.textCursor()
+                        match = str(objNode.name) + ":"
+                        regex = QtCore.QRegExp(match)
+                        idx = regex.indexIn(self.QtInput.toPlainText(),0)
+                        cursor.setPosition(idx)
+                        self.QtInput.setTextCursor(cursor)
+                        #cursor.movePosition(QtGui.QTextCursor.StartOfLine)                
                 elif isinstance(objNode, If):
                     #solve oper and if the result is not 0 then it will make a jump
                     var_Temp = None
@@ -192,10 +208,22 @@ class Interpreter():
                         if not objNode.name in self.labelDict:
                             addErr(ErrType.SEMANTIC, "Error: Label '"+objNode.name +"' does not exist", objNode.row)
                             Interpreter.idx_debug = -1
-                        Interpreter.idx_debug = self.labelDict[objNode.name]
+                            return
+                        else:
+                            Interpreter.idx_debug = self.labelDict[objNode.name]
+                            #Attemps to put the cursor on the label
+                            cursor = self.QtInput.textCursor()
+                            match = str(objNode.name) + ":"
+                            regex = QtCore.QRegExp(match)
+                            idx = regex.indexIn(self.QtInput.toPlainText(),0)
+                            cursor.setPosition(idx)
+                            self.QtInput.setTextCursor(cursor)
             elif lenNode == 2:
                 solve_assign(self.astTree[Interpreter.idx_debug])
             #increment the counter
             Interpreter.idx_debug += 1
+            #moves the cursor
+            self.QtInput.moveCursor(QtGui.QTextCursor.NextBlock, QtGui.QTextCursor.MoveAnchor)
         else:
             Interpreter.idx_debug = -1
+            return

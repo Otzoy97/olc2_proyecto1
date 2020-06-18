@@ -3,3 +3,6 @@ __pycache__/
 parser.out
 parsetab.py
 report/
+build/
+dist/
+*.spec
